@@ -2,3 +2,5 @@
 
 export(read_dag)
 export(read_data)
+importFrom(Rcpp,sourceCpp)
+useDynLib(bayesnetworks, .registration = TRUE)
