@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // fit_network
-int fit_network(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, int MaxPar);
-RcppExport SEXP _bayesnetworks_fit_network(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP MaxParSEXP) {
+int fit_network(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, int MaxPar, const double phi, const double omega, const int InitialNetwork);
+RcppExport SEXP _bayesnetworks_fit_network(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP MaxParSEXP, SEXP phiSEXP, SEXP omegaSEXP, SEXP InitialNetworkSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -16,13 +16,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type nodetype(nodetypeSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type par(parSEXP);
     Rcpp::traits::input_parameter< int >::type MaxPar(MaxParSEXP);
-    rcpp_result_gen = Rcpp::wrap(fit_network(X, Npar, nodetype, par, MaxPar));
+    Rcpp::traits::input_parameter< const double >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< const double >::type omega(omegaSEXP);
+    Rcpp::traits::input_parameter< const int >::type InitialNetwork(InitialNetworkSEXP);
+    rcpp_result_gen = Rcpp::wrap(fit_network(X, Npar, nodetype, par, MaxPar, phi, omega, InitialNetwork));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bayesnetworks_fit_network", (DL_FUNC) &_bayesnetworks_fit_network, 5},
+    {"_bayesnetworks_fit_network", (DL_FUNC) &_bayesnetworks_fit_network, 8},
     {NULL, NULL, 0}
 };
 
