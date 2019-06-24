@@ -27,11 +27,11 @@ void Initialize(int P, int N, int n, int p, double phi, double omega,
   if (InitialNetwork==1)      // create a random initial network
   {   for (p=0; p<P; p++)
     if (nodetype[p] != 1)   //node is not a source
-    {   Npar[p]=MaxPar*RandomUniform();
+    {   Npar[p]=MaxPar*R::runif(0,1);
       for (int s=0; s<Npar[p]; s++)
       {   int found=0;
         while (!found)
-        {   int source = P*RandomUniform();
+        {   int source = P*R::runif(0,1);
           if (source != p && nodetype[source] != 2)   // proposed parent is not a sink
           {   par(p, s) = source;
             found = 1;
@@ -81,7 +81,7 @@ void ProposeAddition(int P,
                      int &p)
 {   int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found)
-  {   newoutput = P*RandomUniform();  // check that the new output is not a source
+  {   newoutput = P*R::runif(0,1);  // check that the new output is not a source
     if (nodetype[newoutput] != 1 && Npar[newoutput]<MaxPar) found=1;
     tries ++;
     if (tries>100)
@@ -89,7 +89,7 @@ void ProposeAddition(int P,
   }
   found=0; tries=0;
   while (!found)
-  {   newinput = P*RandomUniform();   // check that the new input is not a sink
+  {   newinput = P*R::runif(0,1);   // check that the new input is not a sink
     if (nodetype[newinput] != 2 && newinput != newoutput) found=1;
     for (int pp=0; pp<Npar[newoutput]; pp ++)
       if (newinput == par(newoutput, pp)) found=0;
