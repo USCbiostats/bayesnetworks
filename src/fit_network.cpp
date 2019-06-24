@@ -55,6 +55,20 @@ void SaveGraph(int P, int e, int p,
   }
 }
 
+double LogLikelihood(int all,
+                     int &p,
+                     int ChangedNode,
+                     int P)
+{   // accumulate overall loglikelihood for the graph
+  // assuming each node is conditionally independent given its parents
+
+  double loglike=0;
+  p = ChangedNode;
+  if (all) for (p=0; p<P; p++) loglike += 0;//score();
+  else    loglike += 0;//score();
+  return (loglike);
+}
+
 void ProposeAddition(int P,
                      IntegerVector nodetype,
                      IntegerVector &Npar,
@@ -63,7 +77,8 @@ void ProposeAddition(int P,
                      int ChangedNode,
                      double &OldLogLike,
                      double &OldLogPrior,
-                     int &movetype)
+                     int &movetype,
+                     int &p)
 {   int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found)
   {   newoutput = P*RandomUniform();  // check that the new output is not a source
@@ -83,7 +98,7 @@ void ProposeAddition(int P,
         printf("");
   }
   ChangedNode = newoutput;
-  OldLogLike = //LogLikelihood(0);
+  OldLogLike = LogLikelihood(0, p, ChangedNode, P);
   OldLogPrior = //LogPrior();
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
@@ -148,7 +163,9 @@ int fit_network(NumericMatrix X,
 
     if (R::runif(0,1)<0.5 || TotalEdges<3)
       {
-      ProposeAddition(P, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype);
+      ProposeAddition(P, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
+                      // passed to loglikelihood
+                      p);
       }
     else
       {
