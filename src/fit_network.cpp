@@ -3,7 +3,7 @@
 #include "random4f.h"
 using namespace Rcpp;
 
-void Initialize(int P, int N, int n, int p, double phi, double omega,
+void Initialize(int P, int N, int &n, int &p, double phi, double omega,
                 NumericMatrix X,
                 NumericVector &sumX,
                 NumericMatrix &sumXX,
@@ -76,6 +76,7 @@ double score(double &SY, double &SYY,
   SY=0; SYY=0;
   SXY.fill(0);
   SXX.fill(0);
+  SXXinv.fill(0);
 
   SY = sumX[p]; SYY = sumXX(p, p); SXX(0, 0) = N; SXY[0] = sumX[p];
   for (int par1=0; par1<Npar[p]; par1++)
@@ -175,9 +176,9 @@ void ProposeAddition(int P,
                      int N,
                      IntegerVector nodetype,
                      IntegerVector &Npar,
-                     int &MaxPar,
+                     int MaxPar,
                      IntegerMatrix &par,
-                     int ChangedNode,
+                     int &ChangedNode,
                      double &OldLogLike,
                      double &OldLogPrior,
                      int &movetype,
@@ -226,16 +227,16 @@ void ProposeAddition(int P,
   OldLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
-  Rprintf (" add %2d->%2d ",newinput,newoutput); movetype=1;
+  Rprintf (" add %2d->%2d",newinput,newoutput); movetype=1;
 }
 
 void ProposeDeletion(int P,
                      int N,
                      IntegerVector nodetype,
                      IntegerVector &Npar,
-                     int &MaxPar,
+                     int MaxPar,
                      IntegerMatrix &par,
-                     int ChangedNode,
+                     int &ChangedNode,
                      double &OldLogLike,
                      double &OldLogPrior,
                      int &movetype,
@@ -278,7 +279,37 @@ void ProposeDeletion(int P,
     for (e=deledge; e<Npar[deloutput]; e++)
       par(deloutput, e) = par(deloutput, e+1);
     Npar[deloutput] --;
-    Rprintf (" del %2d->%2d ",delinput,deloutput); movetype=2;
+    Rprintf (" del %2d->%2d",delinput,deloutput); movetype=2;
+}
+
+void RestoreGraph(int P,
+                  int p,
+                  int e,
+                  IntegerVector &Npar,
+                  IntegerVector saveNpar,
+                  IntegerMatrix &par,
+                  IntegerMatrix savepar)
+  {
+  for (p=0; p<P; p++)
+    {   Npar[p] = saveNpar[p];
+    for (e=0; e<Npar[p]; e++) par(p, e) = savepar(p, e);
+    }
+}
+
+void Tabulate(int P,
+              int &TotalEdges,
+              int p, int e,
+              IntegerMatrix &freqNpar,
+              IntegerVector Npar,
+              IntegerMatrix par,
+              IntegerMatrix freqEdge)
+{   TotalEdges=0;
+  for (p=0; p<P; p++)
+  {   freqNpar(p, Npar[p]) ++;
+    TotalEdges += Npar[p];
+    for (e=0; e<Npar[p]; e++)
+      freqEdge(par(p, e), p) ++;
+  }
 }
 
 // [[Rcpp::export]]
@@ -290,7 +321,8 @@ int fit_network(NumericMatrix X,
                 int Niter,
                 const double phi = 1,
                 const double omega = 6.9,
-                const int InitialNetwork = 2)
+                const int InitialNetwork = 2,
+                const int drop = 0)
 {
   // Iterators
   int e, n, p;
@@ -299,7 +331,7 @@ int fit_network(NumericMatrix X,
 
   // Internals
   int TotalEdges=0, ChangedNode, movetype, Nagree=0, FP, FN;
-  double OldLogLike, OldLogPrior, SY=0, SYY=0, lnLR=0;
+  double OldLogLike, OldLogPrior, NewLogLike, NewLogPrior, SY=0, SYY=0, lnLR=0;
   NumericVector SXY(MaxPar+1);
   NumericMatrix SXX(MaxPar+1, MaxPar+1);
   NumericMatrix SXXinv(MaxPar+1, MaxPar+1);
@@ -317,6 +349,10 @@ int fit_network(NumericMatrix X,
   int NsimEdges=0;
   IntegerVector saveNpar(P);
   IntegerMatrix savepar(P, MaxPar);
+  IntegerMatrix freqNpar(P, MaxPar);
+  freqNpar.fill(0);
+  IntegerMatrix freqEdge(P, P);
+  freqEdge.fill(0);
 
   // ReadData
   for (p=0; p<P; p++)
@@ -333,13 +369,13 @@ int fit_network(NumericMatrix X,
   int valid=1;
   int conv=0,iter=0;
 
-  Rprintf ("\n\n    iter chngd Npar type    lnL       lnPrior      HR      Edges  FP  FN  Agree  Additions   Deletions");
+  Rprintf ("\n\niter chngd        lnL   lnPrior   HR   Edges Nagree   FP  FN  Agree  Additions   Deletions");
   while (iter < Niter)
     {
-    Rprintf ("\n%4d  ",iter);
+    Rprintf ("\n%4d",iter);
     SaveGraph(P, e, p, Npar, par, saveNpar, savepar);
 
-    if (R::runif(0,1)<0.5 || TotalEdges<3)
+    if (R::runif(0,1)>0.5 || TotalEdges<3)
       {
       ProposeAddition(P, N, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
                       // passed to loglikelihood
@@ -360,7 +396,37 @@ int fit_network(NumericMatrix X,
                       TotalEdges, Nagree, e, simEdge, FP, FN, NsimEdges, phi, omega);
       }
 
+    if (valid)
+      {
+      if (iter>=drop) ProposedMoves[movetype] ++;
+      NewLogLike = LogLikelihood(0, p, n, ChangedNode, P, N,
+                                 // Passed to score
+                                 SY, SYY, SXY, SXX, sumX, sumXX, Npar, par, MaxPar, SXXinv, X, lnLR);
+      NewLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
+      double HR = exp(NewLogLike-OldLogLike + NewLogPrior-OldLogPrior);
+      Rprintf ("%7.2f %7.2f %7.2f %3d %3d ",NewLogLike-OldLogLike,NewLogPrior-OldLogPrior,HR,TotalEdges,Nagree);
+
+      if (R::runif(0,1) < HR)
+        {
+        RestoreGraph(P, p, e, Npar, saveNpar, par, savepar);
+        if (iter>=drop) reject[movetype] ++;
+        Rprintf (" rejected");
+        }
+      else
+        {  Rprintf (" accepted");
+          OldLogLike = NewLogLike;
+          OldLogPrior = NewLogPrior;
+        }
+      }
+    else
+    {
+      movetype = 0;
+      reject[movetype] ++;
+      printf (" invalid");
+    }
+    if (iter > Niter) conv=1;
     iter ++;
+    if (iter>drop) Tabulate(P, TotalEdges, p, e, freqNpar, Npar, par, freqEdge);
   }
 
 
