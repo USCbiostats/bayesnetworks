@@ -55,6 +55,41 @@ void SaveGraph(int P, int e, int p,
   }
 }
 
+void ProposeAddition(int P,
+                     IntegerVector nodetype,
+                     IntegerVector &Npar,
+                     int &MaxPar,
+                     IntegerMatrix &par,
+                     int ChangedNode,
+                     double &OldLogLike,
+                     double &OldLogPrior,
+                     int &movetype)
+{   int newinput=-1,newoutput=-1,found=0,tries=0;
+  while (!found)
+  {   newoutput = P*RandomUniform();  // check that the new output is not a source
+    if (nodetype[newoutput] != 1 && Npar[newoutput]<MaxPar) found=1;
+    tries ++;
+    if (tries>100)
+      printf("");
+  }
+  found=0; tries=0;
+  while (!found)
+  {   newinput = P*RandomUniform();   // check that the new input is not a sink
+    if (nodetype[newinput] != 2 && newinput != newoutput) found=1;
+    for (int pp=0; pp<Npar[newoutput]; pp ++)
+      if (newinput == par(newoutput, pp)) found=0;
+      tries ++;
+      if (tries>100)
+        printf("");
+  }
+  ChangedNode = newoutput;
+  OldLogLike = //LogLikelihood(0);
+  OldLogPrior = //LogPrior();
+  par(newoutput, Npar[newoutput]) = newinput;
+  Npar[newoutput] ++;
+  Rprintf (" add %2d->%2d ",newinput,newoutput); movetype=1;
+}
+
 
 // [[Rcpp::export]]
 int fit_network(NumericMatrix X,
@@ -71,6 +106,10 @@ int fit_network(NumericMatrix X,
   int e, n, p;
   IntegerVector reject = {0, 0, 0},
                 ProposedMoves = {0, 0, 0};
+
+  // Internals
+  int TotalEdges=0, ChangedNode, movetype;
+  double OldLogLike, OldLogPrior;
 
   // Data
   int N = X.nrow(), // Number of observations
@@ -106,6 +145,17 @@ int fit_network(NumericMatrix X,
     {
     Rprintf ("\n%4d  ",iter);
     SaveGraph(P, e, p, Npar, par, saveNpar, savepar);
+
+    if (R::runif(0,1)<0.5 || TotalEdges<3)
+      {
+      ProposeAddition(P, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype);
+      }
+    else
+      {
+      Rprintf("Deletion");
+      //ProposeDeletion();
+      }
+
     iter ++;
   }
 
