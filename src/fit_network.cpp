@@ -56,6 +56,8 @@ int fit_network(NumericMatrix X,
 {
   // Iterators
   int e, n, p;
+  IntegerVector reject = {0, 0, 0},
+                ProposedMoves = {0, 0, 0};
 
   // Data
   int N = X.nrow(), // Number of observations
