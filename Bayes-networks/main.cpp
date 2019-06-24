@@ -350,7 +350,7 @@ int main(int argc, const char * argv[])
 //    int valid = CheckValidity();      // needs further debugging (sometimes gets stuck)
     int valid=1;
     int conv=0,iter=0;
-    fprintf (itr,"\n\n    iter chngd Npar type    lnL       lnPrior      HR      Edges  FP  FN  Agree  Additions   Deletions");
+    fprintf (itr,"\n\niter chngd Npar type    lnL       lnPrior      HR      Edges  FP  FN  Agree  Additions   Deletions");
     while (iter < Niter)
     {   printf ("\n%4d  ",iter);
         SaveGraph();
