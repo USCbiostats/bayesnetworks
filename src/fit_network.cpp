@@ -137,6 +137,40 @@ double LogLikelihood(int all,
   return (loglike);
 }
 
+double LogPrior(int &TotalEdges,
+                int &Nagree,
+                int p,
+                int e,
+                int P,
+                IntegerVector Npar,
+                IntegerMatrix par,
+                IntegerMatrix simEdge,
+                int &FP,
+                int &FN,
+                int NsimEdges,
+                double phi,
+                double omega)
+{   // Potts prior for distance from some prior graph structure
+  //      e.g., the simulated graph or from some ontology
+  // Note: omega is a tuning parameter, currently fixed in the constants paragraph.
+  //      To estimate omega,would require the normalization constant,
+  //          summimg over all possible graphs
+
+  double logprior=0;
+  TotalEdges=0; Nagree=0;
+  for (p=0; p<P; p++)
+  {   for (e=0; e<Npar[p]; e++)
+  {   TotalEdges ++;
+    if (simEdge(par(p, e), p)) Nagree ++;
+  }
+  }
+  FP = TotalEdges - Nagree;
+  FN = NsimEdges - Nagree;
+  int dist = FP + FN;
+  logprior = - phi*dist - omega*TotalEdges;
+  return(logprior);
+}
+
 void ProposeAddition(int P,
                      int N,
                      IntegerVector nodetype,
@@ -157,7 +191,16 @@ void ProposeAddition(int P,
                      NumericMatrix sumXX,
                      NumericMatrix &SXXinv,
                      NumericMatrix X,
-                     double &lnLR)
+                     double &lnLR,
+                     int &TotalEdges,
+                     int &Nagree,
+                     int e,
+                     IntegerMatrix simEdge,
+                     int &FP,
+                     int &FN,
+                     int NsimEdges,
+                     int phi,
+                     int omega)
 {   int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found)
   {   newoutput = P*R::runif(0,1);  // check that the new output is not a source
@@ -180,7 +223,7 @@ void ProposeAddition(int P,
   OldLogLike = LogLikelihood(0, p, n, ChangedNode, P, N,
                              // Passed to score
                              SY, SYY, SXY, SXX, sumX, sumXX, Npar, par, MaxPar, SXXinv, X, lnLR);
-  OldLogPrior = //LogPrior();
+  OldLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
   Rprintf (" add %2d->%2d ",newinput,newoutput); movetype=1;
@@ -204,7 +247,7 @@ int fit_network(NumericMatrix X,
                 ProposedMoves = {0, 0, 0};
 
   // Internals
-  int TotalEdges=0, ChangedNode, movetype;
+  int TotalEdges=0, ChangedNode, movetype, Nagree=0, FP, FN;
   double OldLogLike, OldLogPrior, SY=0, SYY=0, lnLR=0;
   NumericVector SXY(MaxPar+1);
   NumericMatrix SXX(MaxPar+1, MaxPar+1);
@@ -251,7 +294,9 @@ int fit_network(NumericMatrix X,
                       // passed to loglikelihood
                       p,
                       // Passed to score
-                      n, SY, SYY, SXY, SXX, sumX, sumXX, SXXinv, X, lnLR);
+                      n, SY, SYY, SXY, SXX, sumX, sumXX, SXXinv, X, lnLR,
+                      // passed to logprior
+                      TotalEdges, Nagree, e, simEdge, FP, FN, NsimEdges, phi, omega);
       }
     else
       {
