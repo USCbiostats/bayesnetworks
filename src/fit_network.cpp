@@ -229,6 +229,57 @@ void ProposeAddition(int P,
   Rprintf (" add %2d->%2d ",newinput,newoutput); movetype=1;
 }
 
+void ProposeDeletion(int P,
+                     int N,
+                     IntegerVector nodetype,
+                     IntegerVector &Npar,
+                     int &MaxPar,
+                     IntegerMatrix &par,
+                     int ChangedNode,
+                     double &OldLogLike,
+                     double &OldLogPrior,
+                     int &movetype,
+                     int &p,
+                     int n,
+                     double &SY,
+                     double &SYY,
+                     NumericVector &SXY,
+                     NumericMatrix &SXX,
+                     NumericVector sumX,
+                     NumericMatrix sumXX,
+                     NumericMatrix &SXXinv,
+                     NumericMatrix X,
+                     double &lnLR,
+                     int &TotalEdges,
+                     int &Nagree,
+                     int e,
+                     IntegerMatrix simEdge,
+                     int &FP,
+                     int &FN,
+                     int NsimEdges,
+                     int phi,
+                     int omega)
+{   int deloutput=P*R::runif(0,1),delinput=-1,deledge=-1;
+  int CurrNoutputs=0,CurrOutputs[P];
+  for (p=0; p<P; p++)
+    if (Npar[p])
+    {   CurrOutputs[CurrNoutputs] = p;
+      CurrNoutputs++;
+    }
+    deloutput = CurrOutputs[int(CurrNoutputs*R::runif(0,1))];
+    deledge = Npar[deloutput]*R::runif(0,1);
+    delinput = par(deloutput, deledge);
+    ChangedNode = deloutput;
+    OldLogLike = LogLikelihood(0, p, n, ChangedNode, P, N,
+                               // Passed to score
+                               SY, SYY, SXY, SXX, sumX, sumXX, Npar, par, MaxPar, SXXinv, X, lnLR);
+    OldLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
+
+    for (e=deledge; e<Npar[deloutput]; e++)
+      par(deloutput, e) = par(deloutput, e+1);
+    Npar[deloutput] --;
+    Rprintf (" del %2d->%2d ",delinput,deloutput); movetype=2;
+}
 
 // [[Rcpp::export]]
 int fit_network(NumericMatrix X,
@@ -300,8 +351,13 @@ int fit_network(NumericMatrix X,
       }
     else
       {
-      Rprintf("Deletion");
-      //ProposeDeletion();
+      ProposeDeletion(P, N, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
+                      // passed to loglikelihood
+                      p,
+                      // Passed to score
+                      n, SY, SYY, SXY, SXX, sumX, sumXX, SXXinv, X, lnLR,
+                      // passed to logprior
+                      TotalEdges, Nagree, e, simEdge, FP, FN, NsimEdges, phi, omega);
       }
 
     iter ++;
