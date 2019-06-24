@@ -55,21 +55,90 @@ void SaveGraph(int P, int e, int p,
   }
 }
 
+double score(double &SY, double &SYY,
+             NumericVector &SXY,
+             NumericMatrix &SXX,
+             NumericVector sumX,
+             NumericMatrix sumXX,
+             int N,
+             int p, int n,
+             IntegerVector Npar,
+             IntegerMatrix par,
+             int MaxPar,
+             NumericMatrix &SXXinv,
+             NumericMatrix X,
+             double &lnLR)
+{
+  // computes the loglikelihood for the current node,
+  // under a simple linear regeression model
+  // including main effects (plus intercept), but no interaction terms for now
+
+  SY=0; SYY=0;
+  SXY.fill(0);
+  SXX.fill(0);
+
+  SY = sumX[p]; SYY = sumXX(p, p); SXX(0, 0) = N; SXY[0] = sumX[p];
+  for (int par1=0; par1<Npar[p]; par1++)
+  {   int p1 = par(p, par1);
+    SXY[par1+1] = sumXX(p, p1);
+    SXX(par1+1, 0) = sumX[p1]; SXX(0, par1+1) = SXX(par1+1, 0);
+    for (int par2=0; par2<Npar[p]; par2++)
+    {   int p2 = par(p, par2);
+      SXX(par1+1, par2+1) = sumXX(p1, p2);
+    }
+  }
+  for (int Par=Npar[p]+1; Par<MaxPar+1; Par++) SXX(Par, Par)=1;
+
+  //int err = InvertPDS(SXX[0],MaxPar+1,SXXinv[0]);
+  //if (err)                // err=14 indicates a non-positive-definite matrix
+  //  printf("");
+  double beta[MaxPar+1]; memset (beta,0,sizeof(beta));
+  for (int par1=0; par1<Npar[p]+1; par1++)
+    for (int par2=0; par2<Npar[p]+1; par2++)
+      beta[par1] += SXY[par2]*SXXinv(par1, par2);
+  double resid2 = 0;
+  for (n=0; n<N; n++)
+  {   double EX=beta[0];
+    for (int Par=0; Par<Npar[p]; Par++)
+      EX += beta[Par+1]*X(n, par(p, Par));
+    resid2 += pow(X(n, p) - EX, 2);
+  }
+  resid2 /= N - Npar[p] - 1;
+  SYY -= SY*SY/N;
+  SYY /= N-1;
+  lnLR = - (N/2.0) * log(resid2/SYY);
+  return (lnLR);
+}
+
 double LogLikelihood(int all,
-                     int &p,
+                     int &p, int n,
                      int ChangedNode,
-                     int P)
+                     int P,
+                     int N,
+                     double &SY,
+                     double &SYY,
+                     NumericVector &SXY,
+                     NumericMatrix &SXX,
+                     NumericVector sumX,
+                     NumericMatrix sumXX,
+                     IntegerVector Npar,
+                     IntegerMatrix par,
+                     int MaxPar,
+                     NumericMatrix &SXXinv,
+                     NumericMatrix X,
+                     double &lnLR)
 {   // accumulate overall loglikelihood for the graph
   // assuming each node is conditionally independent given its parents
 
   double loglike=0;
   p = ChangedNode;
-  if (all) for (p=0; p<P; p++) loglike += 0;//score();
-  else    loglike += 0;//score();
+  if (all) for (p=0; p<P; p++) loglike += score(SY, SYY, SXY, SXX, sumX, sumXX, N, p, n, Npar, par, MaxPar, SXXinv, X, lnLR);
+  else    loglike += score(SY, SYY, SXY, SXX, sumX, sumXX, N, p, n, Npar, par, MaxPar, SXXinv, X, lnLR);
   return (loglike);
 }
 
 void ProposeAddition(int P,
+                     int N,
                      IntegerVector nodetype,
                      IntegerVector &Npar,
                      int &MaxPar,
@@ -78,7 +147,17 @@ void ProposeAddition(int P,
                      double &OldLogLike,
                      double &OldLogPrior,
                      int &movetype,
-                     int &p)
+                     int &p,
+                     int n,
+                     double &SY,
+                     double &SYY,
+                     NumericVector &SXY,
+                     NumericMatrix &SXX,
+                     NumericVector sumX,
+                     NumericMatrix sumXX,
+                     NumericMatrix &SXXinv,
+                     NumericMatrix X,
+                     double &lnLR)
 {   int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found)
   {   newoutput = P*R::runif(0,1);  // check that the new output is not a source
@@ -98,7 +177,9 @@ void ProposeAddition(int P,
         printf("");
   }
   ChangedNode = newoutput;
-  OldLogLike = LogLikelihood(0, p, ChangedNode, P);
+  OldLogLike = LogLikelihood(0, p, n, ChangedNode, P, N,
+                             // Passed to score
+                             SY, SYY, SXY, SXX, sumX, sumXX, Npar, par, MaxPar, SXXinv, X, lnLR);
   OldLogPrior = //LogPrior();
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
@@ -124,7 +205,10 @@ int fit_network(NumericMatrix X,
 
   // Internals
   int TotalEdges=0, ChangedNode, movetype;
-  double OldLogLike, OldLogPrior;
+  double OldLogLike, OldLogPrior, SY=0, SYY=0, lnLR=0;
+  NumericVector SXY(MaxPar+1);
+  NumericMatrix SXX(MaxPar+1, MaxPar+1);
+  NumericMatrix SXXinv(MaxPar+1, MaxPar+1);
 
   // Data
   int N = X.nrow(), // Number of observations
@@ -163,9 +247,11 @@ int fit_network(NumericMatrix X,
 
     if (R::runif(0,1)<0.5 || TotalEdges<3)
       {
-      ProposeAddition(P, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
+      ProposeAddition(P, N, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
                       // passed to loglikelihood
-                      p);
+                      p,
+                      // Passed to score
+                      n, SY, SYY, SXY, SXX, sumX, sumXX, SXXinv, X, lnLR);
       }
     else
       {
