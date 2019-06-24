@@ -1,0 +1,25 @@
+Package: bayesnetworks
+Title: MCMC fitting of Bayesian networks, including source & sink constraints and external network info
+Version: 0.0.0.9000
+Authors@R: c(
+    person(given = "Emil",
+           family = "Hvitfeldt",
+           role = c("aut", "cre"),
+           email = "emilhhvitfeldt@gmail.com",
+           comment = c(ORCID = "0000-0002-0679-1945")),
+    person(given = "Duncan",
+           family = "Thomas",
+           role = c("aut"),
+           email = "dthomas@usc.edu")
+           )
+Description: What the package does (one paragraph).
+License: GPL-3
+Suggests: 
+    testthat (>= 2.1.0),
+    covr
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
+Depends: 
+    R (>= 3.1)
