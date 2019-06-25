@@ -13,8 +13,8 @@ void Initialize(int P, int N, int &n, int &p, double phi, double omega,
                 int MaxPar,
                 IntegerMatrix &par)
 {
-  Rprintf ("Penalty on distance from prior topology (Potts)   = %5.1f", phi);
-  Rprintf ("\nPenalty on network size (number of edges)         = %5.1f\n\n", omega);
+  // RprintF ("Penalty on distance from prior topology (Potts)   = %5.1f", phi);
+  // RprintF ("\nPenalty on network size (number of edges)         = %5.1f\n\n", omega);
 
   for (n=0; n<N; n++)
   {   for (int p1=0; p1<P; p1++)
@@ -91,8 +91,8 @@ double score(double &SY, double &SYY,
   for (int Par=Npar[p]+1; Par<MaxPar+1; Par++) SXX[Par][Par]=1;
 
   int err = InvertPDS(SXX[0],MaxPar+1,SXXinv[0]);
-  //if (err)                // err=14 indicates a non-positive-definite matrix
-  //  printf("");
+  if (err)                // err=14 indicates a non-positive-definite matrix
+    Rcerr << "SXX is a non-positive-definite matrix.\n";
   double beta[MaxPar+1]; memset (beta,0,sizeof(beta));
   for (int par1=0; par1<Npar[p]+1; par1++)
     for (int par2=0; par2<Npar[p]+1; par2++)
@@ -223,7 +223,8 @@ void ProposeAddition(int P,
   OldLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
-  Rprintf (" add %2d->%2d",newinput,newoutput); movetype=1;
+  // RprintF (" add %2d->%2d",newinput,newoutput);
+  movetype=1;
 }
 
 void ProposeDeletion(int P,
@@ -273,7 +274,8 @@ void ProposeDeletion(int P,
     for (e=deledge; e<Npar[deloutput]; e++)
       par(deloutput, e) = par(deloutput, e+1);
     Npar[deloutput] --;
-    Rprintf (" del %2d->%2d",delinput,deloutput); movetype=2;
+    // RprintF (" del %2d->%2d",delinput,deloutput);
+    movetype=2;
 }
 
 inline void RestoreGraph(int P,
@@ -306,8 +308,32 @@ void Tabulate(int P,
   }
 }
 
+struct foo
+  {
+  std::vector<int> iter, TotalEdges, ChangedNode, Npar, movetype, FP, FN, Nagree, Additions, Deletions;
+  std::vector<double> globalLL, NewLogPrior, HR;
+  };
+
+void append_collector(foo &f, int &iter, int &TotalEdges, int &ChangedNode,
+                      int &Npar, int &movetype, double &globalLL, double &NewLogPrior,
+                      double &HR, int &FP, int &FN, int &Nagree, int &Additions, int &Deletions) {
+  f.iter.push_back(iter);
+  f.ChangedNode.push_back(ChangedNode);
+  f.Npar.push_back(Npar);
+  f.movetype.push_back(movetype);
+  f.globalLL.push_back(globalLL);
+  f.NewLogPrior.push_back(NewLogPrior);
+  f.HR.push_back(HR);
+  f.TotalEdges.push_back(TotalEdges);
+  f.FP.push_back(FP);
+  f.FN.push_back(FN);
+  f.Nagree.push_back(Nagree);
+  f.Additions.push_back(Additions);
+  f.Deletions.push_back(Deletions);
+}
+
 // [[Rcpp::export]]
-int fit_network(NumericMatrix X,
+List fit_network(NumericMatrix X,
                 IntegerVector Npar,
                 IntegerVector nodetype,
                 IntegerMatrix par,
@@ -316,10 +342,11 @@ int fit_network(NumericMatrix X,
                 const double phi = 1,
                 const double omega = 6.9,
                 const int InitialNetwork = 2,
-                const int drop = 0)
+                const int drop = 0,
+                int Output = 100)
 {
   // Iterators
-  int e, n, p;
+  int e=0, n, p;
   IntegerVector reject = {0, 0, 0},
                 ProposedMoves = {0, 0, 0};
 
@@ -327,6 +354,8 @@ int fit_network(NumericMatrix X,
   int TotalEdges=0, ChangedNode, movetype, Nagree=0, FP, FN;
   double OldLogLike, OldLogPrior, NewLogLike, NewLogPrior, SY=0, SYY=0, lnLR=0;
   NumericVector SXY(MaxPar+1);
+  int valid=1;
+  int conv=0,iter=0;
 
   // Data
   int N = X.nrow(), // Number of observations
@@ -346,25 +375,14 @@ int fit_network(NumericMatrix X,
   IntegerMatrix freqEdge(P, P);
   freqEdge.fill(0);
 
-  // ReadData
-  for (p=0; p<P; p++)
-  {
-    for (e=0; e<Npar[p]; e++)
-    {
-      simEdge(par(p, e), e) = 1;
-      NsimEdges ++;
-    }
-  }
-
+  // Output
+  struct foo f;
   Initialize(P, N, n, p, phi, omega, X, sumX, sumXX, InitialNetwork, nodetype, Npar, MaxPar, par);
 
-  int valid=1;
-  int conv=0,iter=0;
-
-  Rprintf ("\n\niter chngd        lnL   lnPrior   HR   Edges Nagree   FP  FN  Agree  Additions   Deletions");
+  // RprintF ("\n\niter chngd        lnL   lnPrior   HR   Edges Nagree   FP  FN  Agree  Additions   Deletions");
   while (iter < Niter)
     {
-    Rprintf ("\n%4d",iter);
+    // RprintF ("\n%4d",iter);
     SaveGraph(P, e, p, Npar, par, saveNpar, savepar);
 
     if (R::runif(0,1)>0.5 || TotalEdges<3)
@@ -396,19 +414,32 @@ int fit_network(NumericMatrix X,
                                  SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
       NewLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
       double HR = exp(NewLogLike-OldLogLike + NewLogPrior-OldLogPrior);
-      Rprintf ("%7.2f %7.2f %7.2f %3d %3d ",NewLogLike-OldLogLike,NewLogPrior-OldLogPrior,HR,TotalEdges,Nagree);
+      // RprintF ("%7.2f %7.2f %7.2f %3d %3d ",NewLogLike-OldLogLike,NewLogPrior-OldLogPrior,HR,TotalEdges,Nagree);
 
       if (R::runif(0,1) > HR)
         {
         RestoreGraph(P, p, e, Npar, saveNpar, par, savepar);
         if (iter>=drop) reject[movetype] ++;
-        Rprintf (" rejected");
+        // RprintF (" rejected");
         }
       else
-        {  Rprintf (" accepted");
+        {  // RprintF (" accepted");
           OldLogLike = NewLogLike;
           OldLogPrior = NewLogPrior;
         }
+      if (iter%Output==0)
+      {
+        double globalLL = LogLikelihood(1, p, n, ChangedNode, P, N,
+                                        // Passed to score
+                                        SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
+        int Additions = ProposedMoves[1]-reject[1];
+        int Deletions = ProposedMoves[2]-reject[2];
+        append_collector(f, iter, TotalEdges, ChangedNode, Npar[ChangedNode], movetype, globalLL,
+                         NewLogPrior, HR, FP, FN, Nagree, Additions, Deletions);
+        //fprintf (itr,"\n%8d   %2d  %2d  %2d  %11.4f   %9.4f  %10.3e %5d %3d  %2d %5d %6d %4d",iter,ChangedNode,Npar[ChangedNode],movetype,
+        // globalLL,NewLogPrior,HR,TotalEdges,FP,FN,Nagree,
+        //         ProposedMoves[1]-reject[1], ProposedMoves[2]-reject[2]);
+      }
       }
     else
     {
@@ -422,6 +453,23 @@ int fit_network(NumericMatrix X,
   }
 
 
-  Rprintf ("\n");
-  return 0;
+  // RprintF ("\n");
+  return List::create(
+    Named("mcmc") = DataFrame::create(Named("iter") = f.iter,
+                                      Named("ChangedNode") = f.ChangedNode,
+                                      Named("Npar") = f.Npar,
+                                      Named("movetype") = f.movetype,
+                                      Named("globalLL") = f.globalLL,
+                                      Named("NewLogPrior") = f.NewLogPrior,
+                                      Named("HR") = f.HR,
+                                      Named("TotalEdges") = f.TotalEdges,
+                                      Named("FP") = f.FP,
+                                      Named("FN") = f.FN,
+                                      Named("Nagree") = f.Nagree,
+                                      Named("Additions") = f.Additions,
+                                      Named("Deletions") = f.Deletions),
+    Named("Npar") = Npar,
+    Named("par") = par,
+    Named("simEdge") = simEdge
+    );
 }

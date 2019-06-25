@@ -375,7 +375,8 @@ int main(int argc, const char * argv[])
             }
             if (iter%Output==0)
             {   double globalLL = LogLikelihood(1);
-                fprintf (itr,"\n%8d   %2d  %2d  %2d  %11.4f   %9.4f  %10.3e %5d %3d  %2d %5d %6d %4d",iter,ChangedNode,Npar[ChangedNode],movetype,globalLL,NewLogPrior,HR,TotalEdges,FP,FN,Nagree,
+                fprintf (itr,"\n%8d   %2d  %2d  %2d  %11.4f   %9.4f  %10.3e %5d %3d  %2d %5d %6d %4d",iter,ChangedNode,Npar[ChangedNode],movetype,
+                         globalLL,NewLogPrior,HR,TotalEdges,FP,FN,Nagree,
                     ProposedMoves[1]-reject[1],
                     ProposedMoves[2]-reject[2]);
             }
