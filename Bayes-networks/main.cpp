@@ -49,7 +49,7 @@ FILE *dat,*dag,*sum,*itr,*edg;
 void ReadData()
 {
     // read in subject data
-    
+
     dat = fopen ("/Users/dthomas 1 2/Duncan/Genetics/StatGenP01/Project3/networks/P3 simulation 8.dat","r");
     float junk[6];
     for (n=0; n<N; n++)
@@ -57,10 +57,10 @@ void ReadData()
         for (p=1; p<P; p++) fscanf(dat,"%f",&X[n][p]);
     }
     fclose (dat);
-    
+
     // read in simulated network structure as prior
     //      and initializer (if InitialNetwork=0)
-    
+
     dag = fopen ("/Users/dthomas 1 2/Duncan/Genetics/StatGenP01/Project3/networks/P3 simulation 8.dag.txt","r");
     memset(par,-1,sizeof(par));
     memset (simEdge,0,sizeof(simEdge));
@@ -82,7 +82,7 @@ void Initialize()
     memset (freqEdge,0,sizeof(freqEdge));
     fprintf (sum,"Penalty on distance from prior topology (Potts)   = %5.1f",phi);
     fprintf (sum,"\nPenalty on network size (number of edges)         = %5.1f\n\n",omega);
-    
+
     memset (sumX,0,sizeof(sumX));
     memset (sumXX,0,sizeof(sumXX));
     for (n=0; n<N; n++)
@@ -92,7 +92,7 @@ void Initialize()
                 sumXX[p1][p2] += X[n][p1] * X[n][p2];
         }
     }
-    
+
     if (InitialNetwork==1)      // create a random initial network
     {   for (p=0; p<P; p++)
             if (nodetype[p] != 1)   //node is not a source
@@ -111,7 +111,7 @@ void Initialize()
     }
     else if (InitialNetwork==2)     // create an empty initial network
         memset (Npar,0,sizeof(Npar));
-    
+
 }
 
 double score()
@@ -119,11 +119,11 @@ double score()
     // computes the loglikelihood for the current node,
     // under a simple linear regeression model
     // including main effects (plus intercept), but no interaction terms for now
-    
+
     SY=0; SYY=0;
     memset(SXY,0,sizeof(SXY));
     memset(SXX,0,sizeof(SXX));
- 
+
     SY = sumX[p]; SYY = sumXX[p][p]; SXX[0][0] = N; SXY[0] = sumX[p];
     for (int par1=0; par1<Npar[p]; par1++)
     {   int p1 = par[p][par1];
@@ -160,7 +160,7 @@ double score()
 double LogLikelihood(int all)
 {   // accumulate overall loglikelihood for the graph
     // assuming each node is conditionally independent given its parents
-    
+
     double loglike=0;
     p = ChangedNode;
     if (all) for (p=0; p<P; p++) loglike += score();
@@ -174,7 +174,7 @@ double LogPrior()
     // Note: omega is a tuning parameter, currently fixed in the constants paragraph.
     //      To estimate omega,would require the normalization constant,
     //          summimg over all possible graphs
-    
+
     double logprior=0;
     TotalEdges=0; Nagree=0;
     for (p=0; p<P; p++)
@@ -255,7 +255,7 @@ int CheckValidity()
     // scans the graph to make sure it's acyclic,
     //  no sources have parents, and
     //  no sinks are parents
-    
+
     int ValidGraph=1,finished=0;
     memset (isAncestor,0, sizeof(isAncestor));
     for (target=0; target<P; target++)
@@ -326,7 +326,7 @@ void Summarize()
         for (e=0; e<P; e++)
             if (freqEdge[e][p] || simEdge[e][p])
                 fprintf (edg,"\n%2d -> %2d  %6d    %d",e,p,freqEdge[e][p],simEdge[e][p]);
-    
+
     fprintf (sum,"\n\nReversals of direction");
     for (int p1=0; p1<P; p1++)
     for (int e1=0; e1<Npar[p1]; e1++)
@@ -350,7 +350,7 @@ int main(int argc, const char * argv[])
 //    int valid = CheckValidity();      // needs further debugging (sometimes gets stuck)
     int valid=1;
     int conv=0,iter=0;
-    fprintf (itr,"\n\n    iter chngd Npar type    lnL       lnPrior      HR      Edges  FP  FN  Agree  Additions   Deletions");
+    fprintf (itr,"\n\niter chngd Npar type    lnL       lnPrior      HR      Edges  FP  FN  Agree  Additions   Deletions");
     while (iter < Niter)
     {   printf ("\n%4d  ",iter);
         SaveGraph();
@@ -375,7 +375,8 @@ int main(int argc, const char * argv[])
             }
             if (iter%Output==0)
             {   double globalLL = LogLikelihood(1);
-                fprintf (itr,"\n%8d   %2d  %2d  %2d  %11.4f   %9.4f  %10.3e %5d %3d  %2d %5d %6d %4d",iter,ChangedNode,Npar[ChangedNode],movetype,globalLL,NewLogPrior,HR,TotalEdges,FP,FN,Nagree,
+                fprintf (itr,"\n%8d   %2d  %2d  %2d  %11.4f   %9.4f  %10.3e %5d %3d  %2d %5d %6d %4d",iter,ChangedNode,Npar[ChangedNode],movetype,
+                         globalLL,NewLogPrior,HR,TotalEdges,FP,FN,Nagree,
                     ProposedMoves[1]-reject[1],
                     ProposedMoves[2]-reject[2]);
             }
