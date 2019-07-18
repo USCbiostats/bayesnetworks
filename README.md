@@ -33,6 +33,40 @@ devtools::install_github("USCbiostats/bayesnetworks")
 
 ## Examples
 
+The network is fitted by passing in data and network structure
+
+``` r
+library(bayesnetworks)
+set.seed(1234)
+
+x <- fit_network(X = network$data,
+                 Npar = network$dag_info$Npar,
+                 nodetype = network$dag_info$nodetype,
+                 par = network$dag_info$par,
+                 Niter = 50000)
+```
+
+Some diagnostic plots:
+
+``` r
+library(ggplot2)
+ggplot(x$mcmc, aes(iter, Nagree)) +
+  geom_line(aes(color = "Nagree")) +
+  geom_line(aes(y = TotalEdges, color = "TotalEdges")) +
+  scale_color_manual(values = c("#B22222", "#22B2B2"))
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+
+``` r
+ggplot(x$mcmc, aes(iter, FN)) +
+  geom_line(aes(color = "FN")) +
+  geom_line(aes(y = FP, color = "FP")) +
+  scale_color_manual(values = c("#FFA500", "#005AFF"))
+```
+
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+
 ## Code of Conduct
 
 Please note that the ‘bayesnetworks’ project is released with a
