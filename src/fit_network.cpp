@@ -13,8 +13,6 @@ void Initialize(int P, int N, int &n, int &p, double phi, double omega,
                 int MaxPar,
                 IntegerMatrix &par)
 {
-  // RprintF ("Penalty on distance from prior topology (Potts)   = %5.1f", phi);
-  // RprintF ("\nPenalty on network size (number of edges)         = %5.1f\n\n", omega);
 
   for (n=0; n<N; n++)
   {   for (int p1=0; p1<P; p1++)
@@ -223,7 +221,6 @@ void ProposeAddition(int P,
   OldLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
-  // RprintF (" add %2d->%2d",newinput,newoutput);
   movetype=1;
 }
 
@@ -274,7 +271,6 @@ void ProposeDeletion(int P,
     for (e=deledge; e<Npar[deloutput]; e++)
       par(deloutput, e) = par(deloutput, e+1);
     Npar[deloutput] --;
-    // RprintF (" del %2d->%2d",delinput,deloutput);
     movetype=2;
 }
 
@@ -332,13 +328,30 @@ void append_collector(foo &f, int &iter, int &TotalEdges, int &ChangedNode,
   f.Deletions.push_back(Deletions);
 }
 
+//' Fit bayesian network
+//'
+//' @param X numeric matrix
+//' @param Npar Integer vector. Number of parents to each node.
+//' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
+//'     0 = neither.
+//' @param par Integer Matrix. Parents of node p in fitted graph.
+//' @param Niter Integer. Number of iterations to run in MCMC.
+//' @param MaxPar Integer. Maximum number of parents allowed for a node.
+//'     Default to 50.
+//' @param phi Numeric. prior on distance from prior network. Defaults to 1.
+//' @param omega Numeric. prior on network size. Defaults to 6.9.
+//' @param InitialNetwork Integer. 0 = simulated; 1 = randon; 2 = null.
+//' @param drop Integer. number to drop for burn-in. Defaults to 0.
+//' @param Output Integer. output every nth iteration. Defaults to 100.
+//'
+//' @export
 // [[Rcpp::export]]
 List fit_network(NumericMatrix X,
                 IntegerVector Npar,
                 IntegerVector nodetype,
                 IntegerMatrix par,
-                int MaxPar,
                 int Niter,
+                int MaxPar = 50,
                 const double phi = 1,
                 const double omega = 6.9,
                 const int InitialNetwork = 2,
@@ -389,10 +402,8 @@ List fit_network(NumericMatrix X,
   struct foo f;
   Initialize(P, N, n, p, phi, omega, X, sumX, sumXX, InitialNetwork, nodetype, Npar, MaxPar, par);
 
-  // RprintF ("\n\niter chngd        lnL   lnPrior   HR   Edges Nagree   FP  FN  Agree  Additions   Deletions");
   while (iter < Niter)
     {
-    // RprintF ("\n%4d",iter);
     SaveGraph(P, e, p, Npar, par, saveNpar, savepar);
 
     if (R::runif(0,1)>0.5 || TotalEdges<3)
@@ -424,16 +435,14 @@ List fit_network(NumericMatrix X,
                                  SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
       NewLogPrior = LogPrior(TotalEdges, Nagree, p, e, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
       double HR = exp(NewLogLike-OldLogLike + NewLogPrior-OldLogPrior);
-      // RprintF ("%7.2f %7.2f %7.2f %3d %3d ",NewLogLike-OldLogLike,NewLogPrior-OldLogPrior,HR,TotalEdges,Nagree);
 
       if (R::runif(0,1) > HR)
         {
         RestoreGraph(P, p, e, Npar, saveNpar, par, savepar);
         if (iter>=drop) reject[movetype] ++;
-        // RprintF (" rejected");
         }
       else
-        {  // RprintF (" accepted");
+        {
           OldLogLike = NewLogLike;
           OldLogPrior = NewLogPrior;
         }
@@ -446,24 +455,18 @@ List fit_network(NumericMatrix X,
         int Deletions = ProposedMoves[2]-reject[2];
         append_collector(f, iter, TotalEdges, ChangedNode, Npar[ChangedNode], movetype, globalLL,
                          NewLogPrior, HR, FP, FN, Nagree, Additions, Deletions);
-        //fprintf (itr,"\n%8d   %2d  %2d  %2d  %11.4f   %9.4f  %10.3e %5d %3d  %2d %5d %6d %4d",iter,ChangedNode,Npar[ChangedNode],movetype,
-        // globalLL,NewLogPrior,HR,TotalEdges,FP,FN,Nagree,
-        //         ProposedMoves[1]-reject[1], ProposedMoves[2]-reject[2]);
       }
       }
     else
     {
       movetype = 0;
       reject[movetype] ++;
-      printf (" invalid");
     }
     if (iter > Niter) conv=1;
     iter ++;
     if (iter>drop) Tabulate(P, TotalEdges, p, e, freqNpar, Npar, par, freqEdge);
   }
 
-
-  // RprintF ("\n");
   return List::create(
     Named("mcmc") = DataFrame::create(Named("iter") = f.iter,
                                       Named("ChangedNode") = f.ChangedNode,

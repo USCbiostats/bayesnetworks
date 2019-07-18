@@ -12,7 +12,7 @@ Authors@R: c(
            role = c("aut"),
            email = "dthomas@usc.edu")
            )
-Description: What the package does (one paragraph).
+Description: MCMC fitting of Bayesian networks, including source & sink constraints and external network info.
 License: GPL-3
 Suggests: 
     testthat (>= 2.1.0),
