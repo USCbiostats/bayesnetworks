@@ -18,10 +18,10 @@ void Initialize(int P, int N, int &n, int &p, double phi, double omega,
 
   for (n=0; n<N; n++)
   {   for (int p1=0; p1<P; p1++)
-  {   sumX[p1] += X(n, p1);
-    for (int p2=0; p2<P; p2++)
-      sumXX(p1, p2) += X(n, p1) * X(n, p2);
-  }
+    {   sumX[p1] += X(n, p1);
+      for (int p2=0; p2<P; p2++)
+          sumXX(p1, p2) += X(n, p1) * X(n, p2);
+    }
   }
 
   if (InitialNetwork==1)      // create a random initial network
@@ -196,8 +196,8 @@ void ProposeAddition(int P,
                      int &FP,
                      int &FN,
                      int NsimEdges,
-                     int phi,
-                     int omega)
+                     double phi,
+                     double omega)
 {   int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found)
   {   newoutput = P*R::runif(0,1);  // check that the new output is not a source
@@ -253,8 +253,8 @@ void ProposeDeletion(int P,
                      int &FP,
                      int &FN,
                      int NsimEdges,
-                     int phi,
-                     int omega)
+                     double phi,
+                     double omega)
 {   int deloutput=P*R::runif(0,1),delinput=-1,deledge=-1;
   int CurrNoutputs=0,CurrOutputs[P];
   for (p=0; p<P; p++)
