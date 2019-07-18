@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // fit_network
-List fit_network(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, int MaxPar, int Niter, const double phi, const double omega, const int InitialNetwork, const int drop, int Output);
-RcppExport SEXP _bayesnetworks_fit_network(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP MaxParSEXP, SEXP NiterSEXP, SEXP phiSEXP, SEXP omegaSEXP, SEXP InitialNetworkSEXP, SEXP dropSEXP, SEXP OutputSEXP) {
+List fit_network(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, int Niter, int MaxPar, const double phi, const double omega, const int InitialNetwork, const int drop, int Output);
+RcppExport SEXP _bayesnetworks_fit_network(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP NiterSEXP, SEXP MaxParSEXP, SEXP phiSEXP, SEXP omegaSEXP, SEXP InitialNetworkSEXP, SEXP dropSEXP, SEXP OutputSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -15,14 +15,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type Npar(NparSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type nodetype(nodetypeSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type par(parSEXP);
-    Rcpp::traits::input_parameter< int >::type MaxPar(MaxParSEXP);
     Rcpp::traits::input_parameter< int >::type Niter(NiterSEXP);
+    Rcpp::traits::input_parameter< int >::type MaxPar(MaxParSEXP);
     Rcpp::traits::input_parameter< const double >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< const double >::type omega(omegaSEXP);
     Rcpp::traits::input_parameter< const int >::type InitialNetwork(InitialNetworkSEXP);
     Rcpp::traits::input_parameter< const int >::type drop(dropSEXP);
     Rcpp::traits::input_parameter< int >::type Output(OutputSEXP);
-    rcpp_result_gen = Rcpp::wrap(fit_network(X, Npar, nodetype, par, MaxPar, Niter, phi, omega, InitialNetwork, drop, Output));
+    rcpp_result_gen = Rcpp::wrap(fit_network(X, Npar, nodetype, par, Niter, MaxPar, phi, omega, InitialNetwork, drop, Output));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -332,13 +332,30 @@ void append_collector(foo &f, int &iter, int &TotalEdges, int &ChangedNode,
   f.Deletions.push_back(Deletions);
 }
 
+//' Fit bayesian network
+//'
+//' @param X numeric matrix
+//' @param Npar Integer vector. Number of parents to each node.
+//' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
+//'     0 = neither.
+//' @param par Integer Matrix. Parents of node p in fitted graph.
+//' @param Niter Integer. Number of iterations to run in MCMC.
+//' @param MaxPar Integer. Maximum number of parents allowed for a node.
+//'     Default to 50.
+//' @param phi Numeric. prior on distance from prior network. Defaults to 1.
+//' @param omega Numeric. prior on network size. Defaults to 6.9.
+//' @param InitialNetwork Integer. 0 = simulated; 1 = randon; 2 = null.
+//' @param drop Integer. number to drop for burn-in. Defaults to 0.
+//' @param Output Integer. output every nth iteration. Defaults to 100.
+//'
+//' @export
 // [[Rcpp::export]]
 List fit_network(NumericMatrix X,
                 IntegerVector Npar,
                 IntegerVector nodetype,
                 IntegerMatrix par,
-                int MaxPar,
                 int Niter,
+                int MaxPar = 50,
                 const double phi = 1,
                 const double omega = 6.9,
                 const int InitialNetwork = 2,
@@ -461,7 +478,6 @@ List fit_network(NumericMatrix X,
     iter ++;
     if (iter>drop) Tabulate(P, TotalEdges, p, e, freqNpar, Npar, par, freqEdge);
   }
-
 
   // RprintF ("\n");
   return List::create(
