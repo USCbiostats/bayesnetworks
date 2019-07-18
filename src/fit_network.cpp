@@ -375,6 +375,16 @@ List fit_network(NumericMatrix X,
   IntegerMatrix freqEdge(P, P);
   freqEdge.fill(0);
 
+  // Sim handling
+  for (p=0; p<P; p++)
+  {
+    for (e=0; e<Npar[p]; e++)
+    {
+      simEdge(par(p, e), p) = 1;
+      NsimEdges ++;
+    }
+  }
+
   // Output
   struct foo f;
   Initialize(P, N, n, p, phi, omega, X, sumX, sumXX, InitialNetwork, nodetype, Npar, MaxPar, par);
