@@ -1,57 +1,8 @@
 #include <Rcpp.h>
 #include "cholesky21.h"
 #include "random4f.h"
+#include "network.h"
 using namespace Rcpp;
-
-void Initialize(int P, int N, int &n, int &p, double phi, double omega,
-                NumericMatrix X,
-                NumericVector &sumX,
-                NumericMatrix &sumXX,
-                int InitialNetwork,
-                IntegerVector nodetype,
-                IntegerVector &Npar,
-                int MaxPar,
-                IntegerMatrix &par)
-{
-
-  for (n=0; n<N; n++)
-  {   for (int p1=0; p1<P; p1++)
-    {   sumX[p1] += X(n, p1);
-      for (int p2=0; p2<P; p2++)
-          sumXX(p1, p2) += X(n, p1) * X(n, p2);
-    }
-  }
-
-  if (InitialNetwork==1)      // create a random initial network
-  {   for (p=0; p<P; p++)
-    if (nodetype[p] != 1)   //node is not a source
-    {   Npar[p]=MaxPar*R::runif(0,1);
-      for (int s=0; s<Npar[p]; s++)
-      {   int found=0;
-        while (!found)
-        {   int source = P*R::runif(0,1);
-          if (source != p && nodetype[source] != 2)   // proposed parent is not a sink
-          {   par(p, s) = source;
-            found = 1;
-          }
-        }
-      }
-    }
-  }
-  else if (InitialNetwork==2)     // create an empty initial network
-    Npar.fill(0);
-}
-
-void SaveGraph(int P, int e, int p,
-               IntegerVector Npar,
-               IntegerMatrix par,
-               IntegerVector &saveNpar,
-               IntegerMatrix &savepar)
-{   for (p=0; p<P; p++)
-  {   saveNpar[p] = Npar[p];
-    for (e=0; e<Npar[p]; e++) savepar(p, e) = par(p, e);
-  }
-}
 
 double score(double &SY, double &SYY,
              NumericVector &SXY,
@@ -274,20 +225,6 @@ void ProposeDeletion(int P,
     movetype=2;
 }
 
-inline void RestoreGraph(int P,
-                  int p,
-                  int e,
-                  IntegerVector &Npar,
-                  IntegerVector saveNpar,
-                  IntegerMatrix &par,
-                  IntegerMatrix savepar)
-  {
-  for (p=0; p<P; p++)
-    {   Npar[p] = saveNpar[p];
-    for (e=0; e<Npar[p]; e++) par(p, e) = savepar(p, e);
-    }
-}
-
 void Tabulate(int P,
               int &TotalEdges,
               int p, int e,
@@ -328,6 +265,31 @@ void append_collector(foo &f, int &iter, int &TotalEdges, int &ChangedNode,
   f.Deletions.push_back(Deletions);
 }
 
+void SaveGraph(int P, int e, int p,
+               IntegerVector Npar,
+               IntegerMatrix par,
+               IntegerVector &saveNpar,
+               IntegerMatrix &savepar)
+{   for (p=0; p<P; p++)
+{   saveNpar[p] = Npar[p];
+  for (e=0; e<Npar[p]; e++) savepar(p, e) = par(p, e);
+}
+}
+
+inline void RestoreGraph(int P,
+                         int p,
+                         int e,
+                         IntegerVector &Npar,
+                         IntegerVector saveNpar,
+                         IntegerMatrix &par,
+                         IntegerMatrix savepar)
+{
+  for (p=0; p<P; p++)
+  {   Npar[p] = saveNpar[p];
+    for (e=0; e<Npar[p]; e++) par(p, e) = savepar(p, e);
+  }
+}
+
 //' Fit bayesian network
 //'
 //' @param X numeric matrix
@@ -358,6 +320,9 @@ List fit_network(NumericMatrix X,
                 const int drop = 0,
                 int Output = 100)
 {
+
+  network init_network(Npar, par);
+
   // Iterators
   int e=0, n, p;
   IntegerVector reject = {0, 0, 0},
@@ -400,8 +365,9 @@ List fit_network(NumericMatrix X,
 
   // Output
   struct foo f;
-  Initialize(P, N, n, p, phi, omega, X, sumX, sumXX, InitialNetwork, nodetype, Npar, MaxPar, par);
+  init_network.Initialize(P, N, phi, omega, X, sumX, sumXX, InitialNetwork, nodetype, MaxPar);
 
+  // MCMC MCMC MCMC
   while (iter < Niter)
     {
     SaveGraph(P, e, p, Npar, par, saveNpar, savepar);
