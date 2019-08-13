@@ -116,32 +116,14 @@ double LogPrior(int &TotalEdges,
   return(logprior);
 }
 
-void ProposeAddition(int P,
-                     int N,
-                     IntegerVector nodetype,
-                     IntegerVector &Npar,
-                     int MaxPar,
-                     IntegerMatrix &par,
-                     int &ChangedNode,
-                     double &OldLogLike,
-                     double &OldLogPrior,
-                     int &movetype,
-                     double &SY,
-                     double &SYY,
-                     NumericVector &SXY,
-                     NumericVector sumX,
-                     NumericMatrix sumXX,
-                     NumericMatrix X,
-                     double &lnLR,
-                     int &TotalEdges,
-                     int &Nagree,
-                     IntegerMatrix simEdge,
-                     int &FP,
-                     int &FN,
-                     int NsimEdges,
-                     double phi,
-                     double omega)
-{   int newinput=-1,newoutput=-1,found=0,tries=0;
+int ProposeAdditionBefore(int P,
+                           IntegerVector nodetype,
+                           IntegerVector &Npar,
+                           int MaxPar,
+                           IntegerMatrix &par,
+                           int &ChangedNode)
+{
+  int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found)
   {   newoutput = P*R::runif(0,1);  // check that the new output is not a source
     if (nodetype[newoutput] != 1 && Npar[newoutput]<MaxPar) found=1;
@@ -160,12 +142,17 @@ void ProposeAddition(int P,
         printf("");
   }
   ChangedNode = newoutput;
-  OldLogLike = LogLikelihood(0, ChangedNode, P, N,
-                             // Passed to score
-                             SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
-  OldLogPrior = LogPrior(TotalEdges, Nagree, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
-  par(newoutput, Npar[newoutput]) = newinput;
-  Npar[newoutput] ++;
+  return newinput;
+}
+
+void ProposeAdditionAfter(int ChangedNode,
+                          int newinput,
+                          IntegerMatrix &par,
+                          IntegerVector &Npar,
+                          int &movetype)
+{
+  par(ChangedNode, Npar[ChangedNode]) = newinput;
+  Npar[ChangedNode] ++;
   movetype=1;
 }
 
@@ -361,11 +348,12 @@ List fit_network(NumericMatrix X,
 
     if (R::runif(0,1)>0.5 || TotalEdges<3)
       {
-      ProposeAddition(P, N, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
-                      // Passed to score
-                      SY, SYY, SXY, sumX, sumXX, X, lnLR,
-                      // passed to logprior
-                      TotalEdges, Nagree, simEdge, FP, FN, NsimEdges, phi, omega);
+      int newinput = ProposeAdditionBefore(P, nodetype, Npar, MaxPar, par, ChangedNode);
+      OldLogLike = LogLikelihood(0, ChangedNode, P, N,
+                                 // Passed to score
+                                 SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
+      OldLogPrior = LogPrior(TotalEdges, Nagree, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
+      ProposeAdditionAfter(ChangedNode, newinput, par, Npar, movetype);
       }
     else
       {
