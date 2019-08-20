@@ -127,11 +127,11 @@ double LogPrior(int &TotalEdges,
 }
 
 int ProposeAdditionBefore(int P,
-                           IntegerVector nodetype,
-                           IntegerVector &Npar,
-                           int MaxPar,
-                           IntegerMatrix &par,
-                           int &ChangedNode) {
+                          IntegerVector nodetype,
+                          IntegerVector &Npar,
+                          int MaxPar,
+                          IntegerMatrix &par,
+                          int &ChangedNode) {
   int newinput=-1,newoutput=-1,found=0,tries=0;
   while (!found) {
     newoutput = P*R::runif(0,1);  // check that the new output is not a source
@@ -163,33 +163,13 @@ void ProposeAdditionAfter(int ChangedNode,
   movetype=1;
 }
 
-void ProposeDeletion(int P,
-                     int N,
-                     IntegerVector nodetype,
-                     IntegerVector &Npar,
-                     int MaxPar,
-                     IntegerMatrix &par,
-                     int &ChangedNode,
-                     double &OldLogLike,
-                     double &OldLogPrior,
-                     int &movetype,
-                     double &SY,
-                     double &SYY,
-                     NumericVector &SXY,
-                     NumericVector sumX,
-                     NumericMatrix sumXX,
-                     NumericMatrix X,
-                     double &lnLR,
-                     int &TotalEdges,
-                     int &Nagree,
-                     IntegerMatrix simEdge,
-                     int &FP,
-                     int &FN,
-                     int NsimEdges,
-                     double phi,
-                     double omega) {
-  int deloutput=P*R::runif(0,1),delinput=-1,deledge=-1;
-  int CurrNoutputs=0,CurrOutputs[P];
+void ProposeDeletionBefore(int P,
+                          IntegerVector &Npar,
+                          IntegerMatrix &par,
+                          int &ChangedNode,
+                          int &deloutput,
+                          int &deledge) {
+  int CurrNoutputs=0,CurrOutputs[P], delinput=-1;
   for (int p=0; p<P; p++) {
     if (Npar[p]) {
       CurrOutputs[CurrNoutputs] = p;
@@ -200,11 +180,14 @@ void ProposeDeletion(int P,
   deledge = Npar[deloutput]*R::runif(0,1);
   delinput = par(deloutput, deledge);
   ChangedNode = deloutput;
-  OldLogLike = LogLikelihood(0, ChangedNode, P, N,
-                             // Passed to score
-                             SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
-  OldLogPrior = LogPrior(TotalEdges, Nagree, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
+}
 
+void ProposeDeletionAfter(int ChangedNode,
+                          IntegerMatrix &par,
+                          IntegerVector &Npar,
+                          int deloutput,
+                          int deledge,
+                          int &movetype) {
   for (int e=deledge; e<Npar[deloutput]; e++) {
     par(deloutput, e) = par(deloutput, e+1);
   }
@@ -358,13 +341,14 @@ List fit_network(NumericMatrix X,
       OldLogPrior = LogPrior(TotalEdges, Nagree, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
       ProposeAdditionAfter(ChangedNode, newinput, par, Npar, movetype);
     } else {
-      ProposeDeletion(P, N, nodetype, Npar, MaxPar, par, ChangedNode, OldLogLike, OldLogPrior, movetype,
-                      // Passed to score
-                      SY, SYY, SXY, sumX, sumXX, X, lnLR,
-                      // passed to logprior
-                      TotalEdges, Nagree, simEdge, FP, FN, NsimEdges, phi, omega);
+      int deloutput=P*R::runif(0,1), deledge=-1;
+      ProposeDeletionBefore(P, Npar, par, ChangedNode, deloutput, deledge);
+      OldLogLike = LogLikelihood(0, ChangedNode, P, N,
+                                 // Passed to score
+                                 SY, SYY, SXY, sumX, sumXX, Npar, par, MaxPar, X, lnLR);
+      OldLogPrior = LogPrior(TotalEdges, Nagree, P, Npar, par, simEdge, FP, FN, NsimEdges, phi, omega);
+      ProposeDeletionAfter(ChangedNode, par, Npar, deloutput, deledge, movetype);
     }
-
     if (valid) {
       if (iter>=drop) ProposedMoves[movetype] ++;
       NewLogLike = LogLikelihood(0, ChangedNode, P, N,
