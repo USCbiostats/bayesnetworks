@@ -15,6 +15,9 @@ private:
   IntegerMatrix par;
   IntegerVector Npar;
 
+  IntegerMatrix save_par;
+  IntegerVector save_Npar;
+
   int MaxPar;
 
   int n_nodes; // Not final
@@ -40,7 +43,7 @@ public:
           int MaxPar,
           IntegerVector nodes, IntegerVector egdes)
     : nodes{nodes}, egdes{egdes}, X{X}, nodetype{nodetype},
-      MaxPar{MaxPar}, par{par}, Npar{Npar} {
+      MaxPar{MaxPar}, par{par}, Npar{Npar}, save_par{par}, save_Npar{Npar} {
 
       N = X.nrow(), // Number of observations
       P = X.ncol(); // Number of variables
@@ -83,11 +86,17 @@ public:
   }
 
   void save_graph() {
+    save_Npar = Npar;
+    save_par = par;
+
     saved_n_egdes = n_egdes;
     saved_n_nodes = n_nodes;
   }
 
   void restore_graph() {
+    Npar = save_Npar;
+    par = save_par;
+
     n_egdes = saved_n_egdes;
     n_nodes = saved_n_egdes;
   }
