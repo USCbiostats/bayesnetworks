@@ -37,7 +37,7 @@ DataFrame main_fun(NumericMatrix X,
                    int output = 10) {
 
   network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar,
-                     nodes, egdes);
+                     nodes, egdes, phi, omega);
 
   for (int i {0}; i < N;  i++) {
     my_network.save_graph();
