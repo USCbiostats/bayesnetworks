@@ -25,14 +25,20 @@ private:
 
   int MaxPar;
 
+  double OldLogLike = {0};
+  double OldLogPrior = {0};
+
+  int movetype;
+
+
   // Tabulation values
   int TotalEdges = {0};
   int Nagree = {0};
   int FP = {0};
   int FN = {0};
 
-  int n_nodes; // Not final
-  int n_egdes; // Not final
+  int n_nodes {0}; // Not final
+  int n_egdes {0}; // Not final
 
   int saved_n_nodes; // Not final
   int saved_n_egdes; // Not final
@@ -55,9 +61,9 @@ public:
           IntegerVector nodes, IntegerVector egdes,
           double phi,
           double omega)
-    : nodes{nodes}, egdes{egdes}, X{X}, nodetype{nodetype},
-      MaxPar{MaxPar}, par{par}, Npar{Npar}, save_par{par}, save_Npar{Npar},
-      phi{phi}, omega{omega} {
+    : nodes{nodes}, egdes{egdes}, X{X}, nodetype{nodetype}, MaxPar{MaxPar},
+      par{par}, Npar{Npar}, save_par{par}, save_Npar{Npar}, phi{phi},
+      omega{omega} {
 
     N = X.nrow(), // Number of observations
     P = X.ncol(); // Number of variables
@@ -122,28 +128,12 @@ public:
     n_nodes = saved_n_egdes;
   }
 
-  void propose_addition() {
-    if (R::runif(0, 1) > 0.5) {
-      n_nodes++;
-    } else {
-      n_egdes++;
-    }
-  }
-
-  void propose_deletion() {
-    if (R::runif(0, 1) > 0.5) {
-      n_nodes--;
-    } else {
-      n_egdes--;
-    }
-  }
-
   double score(int p) {
     // computes the loglikelihood for the current node,
     // under a simple linear regeression model
     // including main effects (plus intercept), but no interaction terms for now
     double SXX[MaxPar+1][MaxPar+1],
-           SXXinv[MaxPar+1][MaxPar+1];
+                        SXXinv[MaxPar+1][MaxPar+1];
     memset(SXX,0,sizeof(SXX));
 
     double SY = {0}, SYY = {0};
@@ -236,13 +226,62 @@ public:
     return(logprior);
   }
 
+  void propose_addition() {
+    int newinput = {-1}, newoutput = {-1}, found = {0}, tries = {0};
+    while (!found)  {
+      newoutput = P*R::runif(0,1);  // check that the new output is not a source
+      if (nodetype[newoutput] != 1 && Npar[newoutput]<MaxPar) found=1;
+      tries ++;
+      if (tries>100)
+        printf("");
+    }
+    found = 0; tries = 0;
+    while (!found)
+    {   newinput = P*R::runif(0,1);   // check that the new input is not a sink
+      if (nodetype[newinput] != 2 && newinput != newoutput) found=1;
+      for (int pp = 0; pp<Npar[newoutput]; pp ++)
+        if (newinput == par(newoutput, pp)) found=0;
+        tries ++;
+        if (tries>100)
+          printf("");
+    }
+    int ChangedNode = newoutput;
+    OldLogLike = LogLikelihood(0, ChangedNode);
+    OldLogPrior = LogPrior();
+    par(newoutput, Npar[newoutput]) = newinput;
+    Npar[newoutput] ++;
+    movetype = 1;
+  }
+
+  void propose_deletion() {
+    int deloutput = P * R::runif(0, 1), delinput = -1, deledge = -1;
+    int CurrNoutputs = 0, CurrOutputs[P];
+    for (int p = 0; p < P; p++)
+      if (Npar[p]) {
+        CurrOutputs[CurrNoutputs] = p;
+        CurrNoutputs++;
+      }
+      deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
+      deledge = Npar[deloutput] * R::runif(0, 1);
+      delinput = par(deloutput, deledge);
+      int ChangedNode = deloutput;
+      OldLogLike = LogLikelihood(0, ChangedNode);
+      OldLogPrior = LogPrior();
+
+      for (int e = deledge; e < Npar[deloutput]; e++) {
+        par(deloutput, e) = par(deloutput, e+1);
+      }
+      Npar[deloutput] --;
+      movetype = 2;
+  }
+
   double checker() {
     return abs(n_egdes - n_nodes) > 5;
   }
 
   void logger(int i) {
-    logging_n_egdes.push_back(n_egdes);
-    logging_n_nodes.push_back(n_nodes);
+    logging_n_egdes.push_back(FN);
+    logging_n_nodes.push_back(FP);
     logging_iter.push_back(i);
   }
 
