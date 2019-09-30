@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 #include "cholesky21.h"
 #include "random4f.h"
-#include "network.h"
+#include "network-old.h"
 using namespace Rcpp;
 
 double score(double &SY, double &SYY,
