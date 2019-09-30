@@ -275,16 +275,16 @@ inline void RestoreGraph(int P,
 //' @export
 // [[Rcpp::export]]
 List fit_network(NumericMatrix X,
-                IntegerVector Npar,
-                IntegerVector nodetype,
-                IntegerMatrix par,
-                int Niter,
-                int MaxPar = 50,
-                const double phi = 1,
-                const double omega = 6.9,
-                const int InitialNetwork = 2,
-                const int drop = 0,
-                int Output = 100) {
+                 IntegerVector Npar,
+                 IntegerVector nodetype,
+                 IntegerMatrix par,
+                 int Niter,
+                 int MaxPar = 50,
+                 const double phi = 1,
+                 const double omega = 6.9,
+                 const int InitialNetwork = 2,
+                 const int drop = 0,
+                 int Output = 100) {
 
   network init_network(Npar, par);
 

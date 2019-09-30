@@ -5,6 +5,29 @@
 
 using namespace Rcpp;
 
+// main_fun
+DataFrame main_fun(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, IntegerVector nodes, IntegerVector egdes, int MaxPar, const double phi, const double omega, const int InitialNetwork, const int drop, int N, int output);
+RcppExport SEXP _bayesnetworks_main_fun(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP nodesSEXP, SEXP egdesSEXP, SEXP MaxParSEXP, SEXP phiSEXP, SEXP omegaSEXP, SEXP InitialNetworkSEXP, SEXP dropSEXP, SEXP NSEXP, SEXP outputSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type Npar(NparSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nodetype(nodetypeSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type par(parSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type nodes(nodesSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type egdes(egdesSEXP);
+    Rcpp::traits::input_parameter< int >::type MaxPar(MaxParSEXP);
+    Rcpp::traits::input_parameter< const double >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< const double >::type omega(omegaSEXP);
+    Rcpp::traits::input_parameter< const int >::type InitialNetwork(InitialNetworkSEXP);
+    Rcpp::traits::input_parameter< const int >::type drop(dropSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type output(outputSEXP);
+    rcpp_result_gen = Rcpp::wrap(main_fun(X, Npar, nodetype, par, nodes, egdes, MaxPar, phi, omega, InitialNetwork, drop, N, output));
+    return rcpp_result_gen;
+END_RCPP
+}
 // fit_network
 List fit_network(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, int Niter, int MaxPar, const double phi, const double omega, const int InitialNetwork, const int drop, int Output);
 RcppExport SEXP _bayesnetworks_fit_network(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP NiterSEXP, SEXP MaxParSEXP, SEXP phiSEXP, SEXP omegaSEXP, SEXP InitialNetworkSEXP, SEXP dropSEXP, SEXP OutputSEXP) {
@@ -28,6 +51,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_bayesnetworks_main_fun", (DL_FUNC) &_bayesnetworks_main_fun, 13},
     {"_bayesnetworks_fit_network", (DL_FUNC) &_bayesnetworks_fit_network, 11},
     {NULL, NULL, 0}
 };
