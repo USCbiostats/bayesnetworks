@@ -27,10 +27,16 @@ private:
 
   double OldLogLike = {0};
   double OldLogPrior = {0};
+  double NewLogLike = {0};
+  double NewLogPrior = {0};
 
   int movetype;
 
   int ChangedNode;
+
+  // Iterators
+  IntegerVector reject = {0, 0, 0},
+                ProposedMoves = {0, 0, 0};
 
   // Tabulation values
   int Nagree = {0};
@@ -71,7 +77,17 @@ public:
   double LogPrior();
   void propose_addition();
   void propose_deletion();
-  double checker();
+  double checker(int iter, int drop);
+  void reject_increment() {
+    reject[movetype] ++;
+  }
+
+  void new2old() {
+    OldLogLike = NewLogLike;
+    OldLogPrior = NewLogPrior;
+  }
+
+
   void logger(int i);
   DataFrame result();
 };
@@ -299,8 +315,14 @@ void network::propose_deletion() {
     movetype = 2;
 }
 
-double network::checker() {
-  return abs(n_egdes - n_nodes) > 5;
+double network::checker(int iter, int drop) {
+  if (iter>=drop) ProposedMoves[movetype] ++;
+  NewLogLike = LogLikelihood(0);
+  NewLogPrior = LogPrior();
+  double HR = exp(NewLogLike-OldLogLike + NewLogPrior-OldLogPrior);
+
+  Rprintf("%f\n", HR);
+  return R::runif(0,1) > HR;
 }
 
 void network::logger(int i) {

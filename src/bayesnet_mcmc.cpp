@@ -48,16 +48,17 @@ DataFrame main_fun(NumericMatrix X,
       my_network.propose_deletion();
     }
 
-    if (my_network.checker()) {
+    if (my_network.checker(i, drop)) {
       my_network.restore_graph();
+      if (i >= drop) my_network.reject_increment();
+    } else {
+      my_network.new2old();
     }
 
     if (i % output == 0) {
       my_network.logger(i);
     }
   }
-
-  DataFrame df = DataFrame::create( Named("V1") = 1 , _["V2"] = 1 );
 
   return my_network.result();
 }
