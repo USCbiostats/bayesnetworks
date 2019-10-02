@@ -30,6 +30,7 @@ private:
 
   int movetype;
 
+  int ChangedNode;
 
   // Tabulation values
   int Nagree = {0};
@@ -66,7 +67,7 @@ public:
   void save_graph();
   void restore_graph();
   double score(int p);
-  double LogLikelihood(int all, int ChangedNode);
+  double LogLikelihood(int all);
   double LogPrior();
   void propose_addition();
   void propose_deletion();
@@ -207,7 +208,7 @@ double network::score(int p) {
   return (lnLR);
 }
 
-double network::LogLikelihood(int all, int ChangedNode) {
+double network::LogLikelihood(int all) {
   // accumulate overall loglikelihood for the graph
   // assuming each node is conditionally independent given its parents
 
@@ -268,8 +269,8 @@ void network::propose_addition() {
       if (tries>100)
         printf("");
   }
-  int ChangedNode = newoutput;
-  OldLogLike = LogLikelihood(0, ChangedNode);
+  ChangedNode = newoutput;
+  OldLogLike = LogLikelihood(0);
   OldLogPrior = LogPrior();
   par(newoutput, Npar[newoutput]) = newinput;
   Npar[newoutput] ++;
@@ -287,8 +288,8 @@ void network::propose_deletion() {
     deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
     deledge = Npar[deloutput] * R::runif(0, 1);
     delinput = par(deloutput, deledge);
-    int ChangedNode = deloutput;
-    OldLogLike = LogLikelihood(0, ChangedNode);
+    ChangedNode = deloutput;
+    OldLogLike = LogLikelihood(0);
     OldLogPrior = LogPrior();
 
     for (int e = deledge; e < Npar[deloutput]; e++) {
