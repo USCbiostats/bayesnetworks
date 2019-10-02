@@ -42,7 +42,7 @@ DataFrame main_fun(NumericMatrix X,
   for (int i {0}; i < N;  i++) {
     my_network.save_graph();
 
-    if (R::runif(0, 1) > 0.2) {
+    if (R::runif(0, 1) > 0.5 || my_network.TotalEdges < 3) {
       my_network.propose_addition();
     } else {
       my_network.propose_deletion();

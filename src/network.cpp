@@ -32,7 +32,6 @@ private:
 
 
   // Tabulation values
-  int TotalEdges = {0};
   int Nagree = {0};
   int FP = {0};
   int FN = {0};
@@ -50,6 +49,8 @@ private:
 public:
   IntegerVector nodes; // Not final
   IntegerVector egdes; // Not final
+
+  int TotalEdges = {0};
 
   // Constructor
   network(NumericMatrix X,

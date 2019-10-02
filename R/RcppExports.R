@@ -24,24 +24,3 @@ main_fun <- function(X, Npar, nodetype, par, nodes, egdes, MaxPar = 50L, phi = 1
     .Call(`_bayesnetworks_main_fun`, X, Npar, nodetype, par, nodes, egdes, MaxPar, phi, omega, InitialNetwork, drop, N, output)
 }
 
-#' Fit bayesian network
-#'
-#' @param X numeric matrix
-#' @param Npar Integer vector. Number of parents to each node.
-#' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
-#'     0 = neither.
-#' @param par Integer Matrix. Parents of node p in fitted graph.
-#' @param Niter Integer. Number of iterations to run in MCMC.
-#' @param MaxPar Integer. Maximum number of parents allowed for a node.
-#'     Default to 50.
-#' @param phi Numeric. prior on distance from prior network. Defaults to 1.
-#' @param omega Numeric. prior on network size. Defaults to 6.9.
-#' @param InitialNetwork Integer. 0 = simulated; 1 = randon; 2 = null.
-#' @param drop Integer. number to drop for burn-in. Defaults to 0.
-#' @param Output Integer. output every nth iteration. Defaults to 100.
-#'
-#' @export
-fit_network <- function(X, Npar, nodetype, par, Niter, MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L, drop = 0L, Output = 100L) {
-    .Call(`_bayesnetworks_fit_network`, X, Npar, nodetype, par, Niter, MaxPar, phi, omega, InitialNetwork, drop, Output)
-}
-
