@@ -112,7 +112,7 @@ network::network(NumericMatrix X,
     omega{omega} {
 
       N = X.nrow(), // Number of observations
-        P = X.ncol(); // Number of variables
+      P = X.ncol(); // Number of variables
 
       NumericVector sumX(P);
       NumericMatrix sumXX(P, P);
@@ -125,6 +125,8 @@ network::network(NumericMatrix X,
           }
         }
       }
+      this->sumX = sumX;
+      this->sumXX = sumXX;
 
       if (InitialNetwork == 1) { // create a random initial network
         for (int p = 0; p < P; p++)
