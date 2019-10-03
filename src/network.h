@@ -133,6 +133,13 @@ network::network(NumericMatrix X,
       this->sumX = sumX;
       this->sumXX = sumXX;
 
+      for (int p=0; p<P; p++) {
+        for (int e=0; e<Npar[p]; e++) {
+          simEdge(par(p, e), p) = 1;
+          NsimEdges ++;
+        }
+      }
+
       if (InitialNetwork == 1) { // create a random initial network
         for (int p = 0; p < P; p++)
           if (nodetype[p] != 1) { // node is not a source
@@ -151,13 +158,6 @@ network::network(NumericMatrix X,
       } else {
         if (InitialNetwork == 2) { // create an empty initial network
           Npar.fill(0);
-        }
-      }
-
-      for (int p=0; p<P; p++) {
-        for (int e=0; e<Npar[p]; e++) {
-          simEdge(par(p, e), p) = 1;
-          NsimEdges ++;
         }
       }
 
