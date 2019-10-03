@@ -26,7 +26,7 @@ private:
   IntegerVector save_Npar;
 
   IntegerMatrix simEdge;
-  int NsimEdges;
+  int NsimEdges = {0};
 
   int MaxPar;
 
@@ -133,12 +133,15 @@ network::network(NumericMatrix X,
       this->sumX = sumX;
       this->sumXX = sumXX;
 
+      IntegerMatrix simEdge(P, P);
+
       for (int p=0; p<P; p++) {
         for (int e=0; e<Npar[p]; e++) {
           simEdge(par(p, e), p) = 1;
           NsimEdges ++;
         }
       }
+      this->simEdge = simEdge;
 
       if (InitialNetwork == 1) { // create a random initial network
         for (int p = 0; p < P; p++)
