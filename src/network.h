@@ -1,4 +1,9 @@
+#ifndef _BAYESNET_NETWORK_H
+#define _BAYESNET_NETWORK_H
+
 #include <Rcpp.h>
+#include "random4f.h"
+#include "cholesky21.h"
 using namespace Rcpp;
 
 class network {
@@ -205,10 +210,10 @@ double network::score(int p) {
     SXX[Par][Par] = 1;
   }
 
-  //int err = InvertPDS(SXX[0],MaxPar+1,SXXinv[0]);
-  //if (err) {                // err=14 indicates a non-positive-definite matrix
-  //  Rcerr << "SXX is a non-positive-definite matrix.\n";
-  //}
+  int err = InvertPDS(SXX[0],MaxPar+1,SXXinv[0]);
+  if (err) {                // err=14 indicates a non-positive-definite matrix
+    Rcerr << "SXX is a non-positive-definite matrix.\n";
+  }
   double beta[MaxPar+1]; memset (beta, 0, sizeof(beta));
 
   for (int par1 = 0; par1 < Npar[p]+1; par1++) {
@@ -360,3 +365,5 @@ DataFrame network::result() {
     Named("FP")          = logging_FP
   );
 }
+
+#endif
