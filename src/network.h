@@ -49,9 +49,15 @@ private:
   int saved_n_nodes; // Not final
   int saved_n_egdes; // Not final
 
-  IntegerVector logging_n_nodes {}; // Not final
-  IntegerVector logging_n_egdes {}; // Not final
-  IntegerVector logging_iter {}; // Not final
+  IntegerVector logging_FN {};
+  IntegerVector logging_FP {};
+  IntegerVector logging_iter {};
+  NumericVector logging_globalLL {};
+  IntegerVector logging_Additions {};
+  IntegerVector logging_Deletions {};
+  IntegerVector logging_ChangedNode {};
+  IntegerVector logging_Npar {};
+  IntegerVector logging_movetype {};
 
 public:
   IntegerVector nodes; // Not final
@@ -319,20 +325,36 @@ double network::checker(int iter, int drop) {
   if (iter>=drop) ProposedMoves[movetype] ++;
   NewLogLike = LogLikelihood(0);
   NewLogPrior = LogPrior();
-  double HR = exp(NewLogLike-OldLogLike + NewLogPrior-OldLogPrior);
-
-  Rprintf("%f\n", HR);
+  double  HR = exp(NewLogLike-OldLogLike + NewLogPrior-OldLogPrior);
   return R::runif(0,1) > HR;
 }
 
 void network::logger(int i) {
-  logging_n_egdes.push_back(FN);
-  logging_n_nodes.push_back(FP);
+  double globalLL = LogLikelihood(1);
+  int Additions = ProposedMoves[1] - reject[1];
+  int Deletions = ProposedMoves[2] - reject[2];
+
+  logging_globalLL.push_back(globalLL);
+  logging_Additions.push_back(Additions);
+  logging_Deletions.push_back(Deletions);
+  logging_FN.push_back(FN);
+  logging_FP.push_back(FP);
   logging_iter.push_back(i);
+  logging_ChangedNode.push_back(ChangedNode);
+  //logging_Npar.push_back(Npar);
+  logging_movetype.push_back(movetype);
 }
 
 DataFrame network::result() {
-  return DataFrame::create(Named("n_egdes") = logging_n_egdes,
-                           Named("n_nodes") = logging_n_nodes,
-                           Named("iter")    = logging_iter);
+  return DataFrame::create(
+    Named("iter")        = logging_iter,
+    Named("ChangedNode") = logging_ChangedNode,
+    //Named("Npar")        = logging_Npar,
+    Named("movetype")    = logging_movetype,
+    Named("globalLL")    = logging_globalLL,
+    Named("additions")   = logging_Additions,
+    Named("deletions")   = logging_Deletions,
+    Named("FN")          = logging_FN,
+    Named("FP")          = logging_FP
+  );
 }
