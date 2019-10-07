@@ -169,16 +169,16 @@ network::network(NumericMatrix X,
 }
 
 void network::save_graph() {
-  save_Npar = Npar;
-  save_par = par;
+  save_Npar = clone(Npar);
+  save_par = clone(par);
 
   saved_n_egdes = n_egdes;
   saved_n_nodes = n_nodes;
 }
 
 void network::restore_graph() {
-  Npar = save_Npar;
-  par = save_par;
+  Npar = clone(save_Npar);
+  par = clone(save_par);
 
   n_egdes = saved_n_egdes;
   n_nodes = saved_n_egdes;
