@@ -103,18 +103,23 @@ public:
   DataFrame result();
 };
 
-network::network(NumericMatrix X,
-                 IntegerMatrix par,
-                 IntegerVector Npar,
-                 IntegerVector nodetype,
-                 int InitialNetwork,
-                 int MaxPar,
-                 IntegerVector nodes, IntegerVector egdes,
-                 double phi,
-                 double omega)
+network::network(const NumericMatrix X,
+                 const IntegerMatrix par,
+                 const IntegerVector Npar,
+                 const IntegerVector nodetype,
+                 const int InitialNetwork,
+                 const int MaxPar,
+                 const IntegerVector nodes, IntegerVector egdes,
+                 const double phi,
+                 const double omega)
   : nodes{nodes}, egdes{egdes}, X{X}, nodetype{nodetype}, MaxPar{MaxPar},
-    par{par}, Npar{Npar}, save_par{par}, save_Npar{Npar}, phi{phi},
-    omega{omega} {
+    phi{phi}, omega{omega} {
+
+      this->Npar = clone(Npar);
+      this->save_Npar = clone(Npar);
+
+      this->par = clone(par);
+      this->save_par = clone(par);
 
       N = X.nrow(), // Number of observations
       P = X.ncol(); // Number of variables
@@ -136,8 +141,8 @@ network::network(NumericMatrix X,
       IntegerMatrix simEdge(P, P);
 
       for (int p=0; p<P; p++) {
-        for (int e=0; e<Npar[p]; e++) {
-          simEdge(par(p, e), p) = 1;
+        for (int e=0; e<this->Npar[p]; e++) {
+          simEdge(this->par(p, e), p) = 1;
           NsimEdges ++;
         }
       }
@@ -146,13 +151,13 @@ network::network(NumericMatrix X,
       if (InitialNetwork == 1) { // create a random initial network
         for (int p = 0; p < P; p++)
           if (nodetype[p] != 1) { // node is not a source
-            Npar[p] = MaxPar * R::runif(0, 1);
-            for (int s = 0; s < Npar[p]; s++) {
+            this->Npar[p] = MaxPar * R::runif(0, 1);
+            for (int s = 0; s < this->Npar[p]; s++) {
               int found = 0;
               while (!found) {
                 int source = P * R::runif(0, 1);
                 if (source != p && nodetype[source] != 2) { // proposed parent is not a sink
-                  par(p, s) = source;
+                  this->par(p, s) = source;
                   found = 1;
                 }
               }
@@ -160,7 +165,7 @@ network::network(NumericMatrix X,
           }
       } else {
         if (InitialNetwork == 2) { // create an empty initial network
-          Npar.fill(0);
+          this->Npar.fill(0);
         }
       }
 
@@ -169,16 +174,16 @@ network::network(NumericMatrix X,
 }
 
 void network::save_graph() {
-  save_Npar = clone(Npar);
-  save_par = clone(par);
+  save_Npar = clone(this->Npar);
+  save_par = clone(this->par);
 
   saved_n_egdes = n_egdes;
   saved_n_nodes = n_nodes;
 }
 
 void network::restore_graph() {
-  Npar = clone(save_Npar);
-  par = clone(save_par);
+  this->Npar = clone(save_Npar);
+  this->par = clone(save_par);
 
   n_egdes = saved_n_egdes;
   n_nodes = saved_n_egdes;
@@ -200,16 +205,16 @@ double network::score(int p) {
   SXX[0][0] = N;
   SXY[0] = sumX[p];
 
-  for (int par1  = 0; par1 < Npar[p]; par1++) {
-    int p1 = par(p, par1);
+  for (int par1  = 0; par1 < this->Npar[p]; par1++) {
+    int p1 = this->par(p, par1);
     SXY[par1+1] = sumXX(p, p1);
     SXX[par1+1][0] = sumX[p1]; SXX[0][par1+1] = SXX[par1+1][0];
-    for (int par2 = 0; par2 < Npar[p]; par2++) {
-      int p2 = par(p, par2);
+    for (int par2 = 0; par2 < this->Npar[p]; par2++) {
+      int p2 = this->par(p, par2);
       SXX[par1+1][par2+1] = sumXX(p1, p2);
     }
   }
-  for (int Par = Npar[p] + 1; Par < MaxPar+1; Par++) {
+  for (int Par = this->Npar[p] + 1; Par < MaxPar+1; Par++) {
     SXX[Par][Par] = 1;
   }
 
@@ -219,8 +224,8 @@ double network::score(int p) {
   }
   double beta[MaxPar+1]; memset (beta, 0, sizeof(beta));
 
-  for (int par1 = 0; par1 < Npar[p]+1; par1++) {
-    for (int par2 = 0; par2  < Npar[p]+1; par2++) {
+  for (int par1 = 0; par1 < this->Npar[p]+1; par1++) {
+    for (int par2 = 0; par2  < this->Npar[p]+1; par2++) {
       beta[par1] += SXY[par2] * SXXinv[par1][par2];
     }
   }
@@ -228,12 +233,12 @@ double network::score(int p) {
   double resid2 = 0;
   for (int n = 0; n < N; n++) {
     double EX = beta[0];
-    for (int Par = 0; Par < Npar[p]; Par++) {
-      EX += beta[Par+1] * X(n, par(p, Par));
+    for (int Par = 0; Par < this->Npar[p]; Par++) {
+      EX += beta[Par+1] * X(n, this->par(p, Par));
     }
     resid2 += pow(X(n, p) - EX, 2);
   }
-  resid2 /= N - Npar[p] - 1;
+  resid2 /= N - this->Npar[p] - 1;
   SYY -= SY * SY / N;
   SYY /= N - 1;
   double lnLR = - (N / 2.0) * log(resid2 / SYY);
@@ -267,9 +272,9 @@ double network::LogPrior() {
   Nagree = {0};
 
   for (int p = 0; p < P; p++) {
-    for (int e = 0; e < Npar[p]; e++) {
+    for (int e = 0; e < this->Npar[p]; e++) {
       TotalEdges ++;
-      if (simEdge(par(p, e), p))  {
+      if (simEdge(this->par(p, e), p))  {
         Nagree ++;
       }
     }
@@ -286,7 +291,7 @@ void network::propose_addition() {
   int newinput = {-1}, newoutput = {-1}, found = {0}, tries = {0};
   while (!found)  {
     newoutput = P*R::runif(0,1);  // check that the new output is not a source
-    if (nodetype[newoutput] != 1 && Npar[newoutput]<MaxPar) found=1;
+    if (nodetype[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
     tries ++;
     if (tries>100)
       printf("");
@@ -295,8 +300,8 @@ void network::propose_addition() {
   while (!found)
   {   newinput = P*R::runif(0,1);   // check that the new input is not a sink
     if (nodetype[newinput] != 2 && newinput != newoutput) found=1;
-    for (int pp = 0; pp<Npar[newoutput]; pp ++)
-      if (newinput == par(newoutput, pp)) found=0;
+    for (int pp = 0; pp<this->Npar[newoutput]; pp ++)
+      if (newinput == this->par(newoutput, pp)) found=0;
       tries ++;
       if (tries>100)
         printf("");
@@ -304,8 +309,8 @@ void network::propose_addition() {
   ChangedNode = newoutput;
   OldLogLike = LogLikelihood(0);
   OldLogPrior = LogPrior();
-  par(newoutput, Npar[newoutput]) = newinput;
-  Npar[newoutput] ++;
+  this->par(newoutput, this->Npar[newoutput]) = newinput;
+  this->Npar[newoutput] ++;
   movetype = 1;
 }
 
@@ -313,21 +318,21 @@ void network::propose_deletion() {
   int deloutput = P * R::runif(0, 1), delinput = -1, deledge = -1;
   int CurrNoutputs = 0, CurrOutputs[P];
   for (int p = 0; p < P; p++)
-    if (Npar[p]) {
+    if (this->Npar[p]) {
       CurrOutputs[CurrNoutputs] = p;
       CurrNoutputs++;
     }
     deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
-    deledge = Npar[deloutput] * R::runif(0, 1);
-    delinput = par(deloutput, deledge);
+    deledge = this->Npar[deloutput] * R::runif(0, 1);
+    delinput = this->par(deloutput, deledge);
     ChangedNode = deloutput;
     OldLogLike = LogLikelihood(0);
     OldLogPrior = LogPrior();
 
-    for (int e = deledge; e < Npar[deloutput]; e++) {
-      par(deloutput, e) = par(deloutput, e+1);
+    for (int e = deledge; e < this->Npar[deloutput]; e++) {
+      this->par(deloutput, e) = this->par(deloutput, e+1);
     }
-    Npar[deloutput] --;
+    this->Npar[deloutput] --;
     movetype = 2;
 }
 
