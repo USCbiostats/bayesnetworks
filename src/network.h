@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 class network {
 private:
-  int N {0}, P {0};
+  int N = 0, P = 0;
   double phi;
   double omega;
 
@@ -25,14 +25,14 @@ private:
   IntegerVector save_Npar;
 
   IntegerMatrix simEdge;
-  int NsimEdges = {0};
+  int NsimEdges = 0;
 
   int MaxPar;
 
-  double OldLogLike = {0};
-  double OldLogPrior = {0};
-  double NewLogLike = {0};
-  double NewLogPrior = {0};
+  double OldLogLike = 0;
+  double OldLogPrior = 0;
+  double NewLogLike = 0;
+  double NewLogPrior = 0;
 
   int movetype;
 
@@ -43,9 +43,9 @@ private:
                 ProposedMoves = {0, 0, 0};
 
   // Tabulation values
-  int Nagree = {0};
-  int FP = {0};
-  int FN = {0};
+  int Nagree = 0;
+  int FP = 0;
+  int FN = 0;
 
   IntegerVector logging_FN {};
   IntegerVector logging_FP {};
@@ -58,7 +58,7 @@ private:
   IntegerVector logging_movetype {};
 
 public:
-  int TotalEdges = {0};
+  int TotalEdges = 0;
 
   // Constructor
   network(NumericMatrix X,
@@ -175,7 +175,7 @@ double network::score(int p) {
                       SXXinv[MaxPar+1][MaxPar+1];
   memset(SXX,0,sizeof(SXX));
 
-  double SY = {0}, SYY = {0};
+  double SY = 0, SYY = 0;
   NumericVector SXY(MaxPar + 1);
   SXY.fill(0);
   SY = sumX[p];
@@ -227,7 +227,7 @@ double network::LogLikelihood(int all) {
   // accumulate overall loglikelihood for the graph
   // assuming each node is conditionally independent given its parents
 
-  double loglike = {0};
+  double loglike = 0;
   if (all) {
     for (int p = 0; p < P; p++) {
       loglike += score(p);
@@ -245,9 +245,9 @@ double network::LogPrior() {
   //      To estimate omega,would require the normalization constant,
   //          summimg over all possible graphs
 
-  double logprior = {0};
-  TotalEdges = {0};
-  Nagree = {0};
+  double logprior = 0;
+  TotalEdges = 0;
+  Nagree = 0;
 
   for (int p = 0; p < P; p++) {
     for (int e = 0; e < this->Npar[p]; e++) {
