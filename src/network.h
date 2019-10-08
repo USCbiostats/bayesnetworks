@@ -48,12 +48,6 @@ private:
   int FP = {0};
   int FN = {0};
 
-  int n_nodes {0}; // Not final
-  int n_egdes {0}; // Not final
-
-  int saved_n_nodes; // Not final
-  int saved_n_egdes; // Not final
-
   IntegerVector logging_FN {};
   IntegerVector logging_FP {};
   IntegerVector logging_iter {};
@@ -65,9 +59,6 @@ private:
   IntegerVector logging_movetype {};
 
 public:
-  IntegerVector nodes; // Not final
-  IntegerVector egdes; // Not final
-
   int TotalEdges = {0};
 
   // Constructor
@@ -112,8 +103,7 @@ network::network(const NumericMatrix X,
                  const IntegerVector nodes, IntegerVector egdes,
                  const double phi,
                  const double omega)
-  : nodes{nodes}, egdes{egdes}, X{X}, nodetype{nodetype}, MaxPar{MaxPar},
-    phi{phi}, omega{omega} {
+  : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {
 
       this->Npar = clone(Npar);
       this->save_Npar = clone(Npar);
@@ -168,25 +158,16 @@ network::network(const NumericMatrix X,
           this->Npar.fill(0);
         }
       }
-
-      n_egdes = egdes.size(); // Not final
-      n_nodes = nodes.size(); // Not final
 }
 
 void network::save_graph() {
   save_Npar = clone(this->Npar);
   save_par = clone(this->par);
-
-  saved_n_egdes = n_egdes;
-  saved_n_nodes = n_nodes;
 }
 
 void network::restore_graph() {
   this->Npar = clone(save_Npar);
   this->par = clone(save_par);
-
-  n_egdes = saved_n_egdes;
-  n_nodes = saved_n_egdes;
 }
 
 double network::score(int p) {
@@ -356,7 +337,6 @@ void network::logger(int i) {
   logging_FP.push_back(FP);
   logging_iter.push_back(i);
   logging_ChangedNode.push_back(ChangedNode);
-  //logging_Npar.push_back(Npar);
   logging_movetype.push_back(movetype);
 }
 
@@ -364,7 +344,6 @@ DataFrame network::result() {
   return DataFrame::create(
     Named("iter")        = logging_iter,
     Named("ChangedNode") = logging_ChangedNode,
-    //Named("Npar")        = logging_Npar,
     Named("movetype")    = logging_movetype,
     Named("globalLL")    = logging_globalLL,
     Named("additions")   = logging_Additions,
