@@ -2,8 +2,7 @@
 #define _BAYESNET_NETWORK_H
 
 #include <Rcpp.h>
-#include "random4f.h"
-#include "cholesky21.h"
+#include "cholesky22.h"
 using namespace Rcpp;
 
 class network {
@@ -275,7 +274,7 @@ void network::propose_addition() {
     if (nodetype[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
     tries ++;
     if (tries>100)
-      printf("");
+      Rprintf("Tried proposing additions more than  100  times");
   }
   found = 0; tries = 0;
   while (!found)
@@ -285,7 +284,7 @@ void network::propose_addition() {
       if (newinput == this->par(newoutput, pp)) found=0;
       tries ++;
       if (tries>100)
-        printf("");
+        Rprintf("Tried proposing deletions more than  100  times");
   }
   ChangedNode = newoutput;
   OldLogLike = LogLikelihood(0);
