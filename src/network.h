@@ -67,7 +67,6 @@ public:
           IntegerVector nodetype,
           int InitialNetwork,
           int MaxPar,
-          IntegerVector nodes, IntegerVector egdes,
           double phi,
           double omega);
 
@@ -99,7 +98,6 @@ network::network(const NumericMatrix X,
                  const IntegerVector nodetype,
                  const int InitialNetwork,
                  const int MaxPar,
-                 const IntegerVector nodes, IntegerVector egdes,
                  const double phi,
                  const double omega)
   : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {

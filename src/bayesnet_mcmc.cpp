@@ -9,8 +9,6 @@ using namespace Rcpp;
 //' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
 //'     0 = neither.
 //' @param par Integer Matrix. Parents of node p in fitted graph.
-//' @param nodes A vector of integers. Denoting nodes in a network.
-//' @param egdes A vector of integers. Denoting egdes in a network.
 //' @param MaxPar Integer. Maximum number of parents allowed for a node.
 //'     Default to 50.
 //' @param phi Numeric. prior on distance from prior network. Defaults to 1.
@@ -26,8 +24,6 @@ DataFrame main_fun(NumericMatrix X,
                    IntegerVector Npar,
                    IntegerVector nodetype,
                    IntegerMatrix par,
-                   IntegerVector nodes, // Not final parameters
-                   IntegerVector egdes, // Not final parameters
                    int MaxPar = 50,
                    const double phi = 1,
                    const double omega = 6.9,
@@ -36,8 +32,7 @@ DataFrame main_fun(NumericMatrix X,
                    int N = 1000,
                    int output = 10) {
 
-  network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar,
-                     nodes, egdes, phi, omega);
+  network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar, phi, omega);
 
   for (int i {0}; i < N;  i++) {
     my_network.save_graph();

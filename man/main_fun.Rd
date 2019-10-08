@@ -4,9 +4,8 @@
 \alias{main_fun}
 \title{Main network playing function}
 \usage{
-main_fun(X, Npar, nodetype, par, nodes, egdes, MaxPar = 50L, phi = 1,
-  omega = 6.9, InitialNetwork = 2L, drop = 0L, N = 1000L,
-  output = 10L)
+main_fun(X, Npar, nodetype, par, MaxPar = 50L, phi = 1, omega = 6.9,
+  InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L)
 }
 \arguments{
 \item{X}{numeric matrix}
@@ -17,10 +16,6 @@ main_fun(X, Npar, nodetype, par, nodes, egdes, MaxPar = 50L, phi = 1,
 0 = neither.}
 
 \item{par}{Integer Matrix. Parents of node p in fitted graph.}
-
-\item{nodes}{A vector of integers. Denoting nodes in a network.}
-
-\item{egdes}{A vector of integers. Denoting egdes in a network.}
 
 \item{MaxPar}{Integer. Maximum number of parents allowed for a node.
 Default to 50.}
