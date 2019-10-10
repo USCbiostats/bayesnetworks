@@ -18,6 +18,15 @@ main_fun(X, Npar, nodetype, par, graph_source, graph_target,
 
 \item{par}{Integer Matrix. Parents of node p in fitted graph.}
 
+\item{graph_source}{Integer vector. Intergers denoting the source of each
+edge.}
+
+\item{graph_target}{Integer vector. Intergers denoting the target of each
+edge.}
+
+\item{graph_node_labels}{Integer vector. Denoting the possible values of the
+nodes.}
+
 \item{MaxPar}{Integer. Maximum number of parents allowed for a node.
 Default to 50.}
 

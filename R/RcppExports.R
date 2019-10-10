@@ -8,6 +8,12 @@
 #' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
 #'     0 = neither.
 #' @param par Integer Matrix. Parents of node p in fitted graph.
+#' @param graph_source Integer vector. Intergers denoting the source of each
+#'     edge.
+#' @param graph_target Integer vector. Intergers denoting the target of each
+#'     edge.
+#' @param graph_node_labels Integer vector. Denoting the possible values of the
+#'     nodes.
 #' @param MaxPar Integer. Maximum number of parents allowed for a node.
 #'     Default to 50.
 #' @param phi Numeric. prior on distance from prior network. Defaults to 1.
