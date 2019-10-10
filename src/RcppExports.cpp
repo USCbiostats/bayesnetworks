@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // main_fun
-DataFrame main_fun(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, const int graph_source, const int graph_target, const int graph_node_labels, int MaxPar, const double phi, const double omega, const int InitialNetwork, const int drop, int N, int output);
+DataFrame main_fun(NumericMatrix X, IntegerVector Npar, IntegerVector nodetype, IntegerMatrix par, std::vector<int> graph_source, std::vector<int> graph_target, std::vector<int> graph_node_labels, int MaxPar, const double phi, const double omega, const int InitialNetwork, const int drop, int N, int output);
 RcppExport SEXP _bayesnetworks_main_fun(SEXP XSEXP, SEXP NparSEXP, SEXP nodetypeSEXP, SEXP parSEXP, SEXP graph_sourceSEXP, SEXP graph_targetSEXP, SEXP graph_node_labelsSEXP, SEXP MaxParSEXP, SEXP phiSEXP, SEXP omegaSEXP, SEXP InitialNetworkSEXP, SEXP dropSEXP, SEXP NSEXP, SEXP outputSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -15,9 +15,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type Npar(NparSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type nodetype(nodetypeSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type par(parSEXP);
-    Rcpp::traits::input_parameter< const int >::type graph_source(graph_sourceSEXP);
-    Rcpp::traits::input_parameter< const int >::type graph_target(graph_targetSEXP);
-    Rcpp::traits::input_parameter< const int >::type graph_node_labels(graph_node_labelsSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type graph_source(graph_sourceSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type graph_target(graph_targetSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type graph_node_labels(graph_node_labelsSEXP);
     Rcpp::traits::input_parameter< int >::type MaxPar(MaxParSEXP);
     Rcpp::traits::input_parameter< const double >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< const double >::type omega(omegaSEXP);

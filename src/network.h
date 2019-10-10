@@ -81,9 +81,9 @@ public:
           int MaxPar,
           double phi,
           double omega,
-          int graph_source,
-          int graph_target,
-          int graph_node_labels);
+          std::vector<int> graph_source,
+          std::vector<int> graph_target,
+          std::vector<int> graph_node_labels);
 
   void save_graph();
   void restore_graph();
@@ -115,9 +115,9 @@ network::network(const NumericMatrix X,
                  const int MaxPar,
                  const double phi,
                  const double omega,
-                 int graph_source,
-                 int graph_target,
-                 int graph_node_labels)
+                 const std::vector<int> graph_source,
+                 const std::vector<int> graph_target,
+                 const std::vector<int> graph_node_labels)
   : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {
 
       this->Npar = clone(Npar);
