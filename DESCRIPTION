@@ -16,7 +16,8 @@ Description: MCMC fitting of Bayesian networks, including source & sink constrai
 License: GPL-3
 Suggests: 
     testthat (>= 2.1.0),
-    covr
+    covr,
+    networkD3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
