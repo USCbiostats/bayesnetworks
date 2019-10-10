@@ -24,6 +24,9 @@ DataFrame main_fun(NumericMatrix X,
                    IntegerVector Npar,
                    IntegerVector nodetype,
                    IntegerMatrix par,
+                   const int graph_source,
+                   const int graph_target,
+                   const int graph_node_labels,
                    int MaxPar = 50,
                    const double phi = 1,
                    const double omega = 6.9,
@@ -32,7 +35,8 @@ DataFrame main_fun(NumericMatrix X,
                    int N = 1000,
                    int output = 10) {
 
-  network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar, phi, omega);
+  network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar, phi, omega,
+                     graph_source, graph_target, graph_node_labels);
 
   for (int i {0}; i < N;  i++) {
     my_network.save_graph();

@@ -5,6 +5,18 @@
 #include "cholesky22.h"
 using namespace Rcpp;
 
+class graph {
+  std::vector<int> edges;
+  std::vector<int> degree;
+  int nodetype;
+  int MaxPar;
+
+public:
+  graph() {
+
+  }
+};
+
 class network {
 private:
   int N = 0, P = 0;
@@ -68,7 +80,10 @@ public:
           int InitialNetwork,
           int MaxPar,
           double phi,
-          double omega);
+          double omega,
+          int graph_source,
+          int graph_target,
+          int graph_node_labels);
 
   void save_graph();
   void restore_graph();
@@ -99,7 +114,10 @@ network::network(const NumericMatrix X,
                  const int InitialNetwork,
                  const int MaxPar,
                  const double phi,
-                 const double omega)
+                 const double omega,
+                 int graph_source,
+                 int graph_target,
+                 int graph_node_labels)
   : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {
 
       this->Npar = clone(Npar);

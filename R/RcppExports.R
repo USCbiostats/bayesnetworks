@@ -18,7 +18,7 @@
 #' @param output Integer. output every nth iteration. Defaults to 100.
 #'
 #' @export
-main_fun <- function(X, Npar, nodetype, par, MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L) {
-    .Call(`_bayesnetworks_main_fun`, X, Npar, nodetype, par, MaxPar, phi, omega, InitialNetwork, drop, N, output)
+main_fun <- function(X, Npar, nodetype, par, graph_source, graph_target, graph_node_labels, MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L) {
+    .Call(`_bayesnetworks_main_fun`, X, Npar, nodetype, par, graph_source, graph_target, graph_node_labels, MaxPar, phi, omega, InitialNetwork, drop, N, output)
 }
 
