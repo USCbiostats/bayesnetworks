@@ -15,6 +15,8 @@ using namespace Rcpp;
 //'     edge.
 //' @param graph_node_labels Integer vector. Denoting the possible values of the
 //'     nodes.
+//' @param graph_node_type Integer vector. Type of the nodes. 1 = source;
+//'     2 = sink; 0 = neither.
 //' @param MaxPar Integer. Maximum number of parents allowed for a node.
 //'     Default to 50.
 //' @param phi Numeric. prior on distance from prior network. Defaults to 1.
@@ -33,6 +35,7 @@ DataFrame main_fun(NumericMatrix X,
                    std::vector<int> graph_source,
                    std::vector<int> graph_target,
                    std::vector<int> graph_node_labels,
+                   std::vector<int> graph_node_type,
                    int MaxPar = 50,
                    const double phi = 1,
                    const double omega = 6.9,
@@ -42,7 +45,7 @@ DataFrame main_fun(NumericMatrix X,
                    int output = 10) {
 
   network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar, phi, omega,
-                     graph_source, graph_target, graph_node_labels);
+                     graph_source, graph_target, graph_node_labels, graph_node_type);
 
   for (int i {0}; i < N;  i++) {
     my_network.save_graph();

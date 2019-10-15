@@ -5,8 +5,9 @@
 \title{Main network playing function}
 \usage{
 main_fun(X, Npar, nodetype, par, graph_source, graph_target,
-  graph_node_labels, MaxPar = 50L, phi = 1, omega = 6.9,
-  InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L)
+  graph_node_labels, graph_node_type, MaxPar = 50L, phi = 1,
+  omega = 6.9, InitialNetwork = 2L, drop = 0L, N = 1000L,
+  output = 10L)
 }
 \arguments{
 \item{X}{numeric matrix}
@@ -26,6 +27,9 @@ edge.}
 
 \item{graph_node_labels}{Integer vector. Denoting the possible values of the
 nodes.}
+
+\item{graph_node_type}{Integer vector. Type of the nodes. 1 = source;
+2 = sink; 0 = neither.}
 
 \item{MaxPar}{Integer. Maximum number of parents allowed for a node.
 Default to 50.}

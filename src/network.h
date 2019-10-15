@@ -6,14 +6,29 @@
 using namespace Rcpp;
 
 class graph {
-  std::vector<int> edges;
+  std::vector<std::vector<int>> edges;
   std::vector<int> degree;
-  int nodetype;
+  std::vector<int> labels;
+  std::vector<int> type;
   int MaxPar;
 
 public:
-  graph() {
+  graph(const std::vector<int> source,
+        const std::vector<int> target,
+        const std::vector<int> labels,
+        const std::vector<int> type) {
 
+    std::vector<std::vector<int>> temp_edges(labels.size());
+    std::vector<int> temp_degree(labels.size());
+
+    for (int i=0; i < source.size(); i++) {
+      temp_edges[target[i]-2].push_back(source[i]-1);
+      temp_degree[target[i]-1]++;
+    }
+    this->degree = temp_degree;
+    this->edges = temp_edges;
+    this->labels = labels;
+    this->type = type;
   }
 };
 
@@ -83,7 +98,8 @@ public:
           double omega,
           std::vector<int> graph_source,
           std::vector<int> graph_target,
-          std::vector<int> graph_node_labels);
+          std::vector<int> graph_node_labels,
+          const std::vector<int> graph_node_type);
 
   void save_graph();
   void restore_graph();
@@ -117,11 +133,14 @@ network::network(const NumericMatrix X,
                  const double omega,
                  const std::vector<int> graph_source,
                  const std::vector<int> graph_target,
-                 const std::vector<int> graph_node_labels)
+                 const std::vector<int> graph_node_labels,
+                 const std::vector<int> graph_node_type)
   : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {
 
       this->Npar = clone(Npar);
       this->save_Npar = clone(Npar);
+
+      graph ggg(graph_source, graph_target, graph_node_labels, graph_node_type);
 
       this->par = clone(par);
       this->save_par = clone(par);
