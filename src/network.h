@@ -5,33 +5,6 @@
 #include "cholesky22.h"
 using namespace Rcpp;
 
-class graph {
-  std::vector<std::vector<int>> edges;
-  std::vector<int> degree;
-  std::vector<int> labels;
-  std::vector<int> type;
-  int MaxPar;
-
-public:
-  graph(const std::vector<int> source,
-        const std::vector<int> target,
-        const std::vector<int> labels,
-        const std::vector<int> type) {
-
-    std::vector<std::vector<int>> temp_edges(labels.size());
-    std::vector<int> temp_degree(labels.size());
-
-    for (int i=0; i < source.size(); i++) {
-      temp_edges[target[i]-2].push_back(source[i]-1);
-      temp_degree[target[i]-1]++;
-    }
-    this->degree = temp_degree;
-    this->edges = temp_edges;
-    this->labels = labels;
-    this->type = type;
-  }
-};
-
 class network {
 private:
   int N = 0, P = 0;
@@ -44,6 +17,8 @@ private:
   NumericMatrix sumXX;
 
   IntegerVector nodetype;
+
+  std::vector<std::vector<int>> edges;
 
   IntegerMatrix par;
   IntegerVector Npar;
@@ -140,13 +115,16 @@ network::network(const NumericMatrix X,
       this->Npar = clone(Npar);
       this->save_Npar = clone(Npar);
 
-      graph ggg(graph_source, graph_target, graph_node_labels, graph_node_type);
-
       this->par = clone(par);
       this->save_par = clone(par);
 
       N = X.nrow(), // Number of observations
       P = X.ncol(); // Number of variables
+
+      edges.resize(graph_node_labels.size());
+      for (int i=0; i < graph_source.size(); i++) {
+        edges[graph_target[i]-1].push_back(graph_source[i]-1);
+      }
 
       NumericVector sumX(P);
       NumericMatrix sumXX(P, P);
