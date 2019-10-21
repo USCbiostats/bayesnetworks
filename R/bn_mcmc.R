@@ -6,7 +6,7 @@
 #' @return sss
 #' @export
 bn_mcmc <- function(X, graph, MaxPar = 50L, phi = 1, omega = 6.9,
-                    InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L) {
+                    InitialNetwork = 2L, drop = 0L, N = 1000L, output = 100L) {
 
   targets <- graph$target
   sources <- graph$source
