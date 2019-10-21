@@ -4,15 +4,12 @@
 \alias{main_fun}
 \title{Main network playing function}
 \usage{
-main_fun(X, nodetype, graph_source, graph_target, graph_node_labels,
-  graph_node_type, MaxPar = 50L, phi = 1, omega = 6.9,
-  InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L)
+main_fun(X, graph_source, graph_target, graph_node_labels, graph_node_type,
+  MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L,
+  drop = 0L, N = 1000L, output = 10L)
 }
 \arguments{
 \item{X}{numeric matrix}
-
-\item{nodetype}{Integer vector. Type of the nodes. 1 = source: 2 = sink;
-0 = neither.}
 
 \item{graph_source}{Integer vector. Intergers denoting the source of each
 edge.}
@@ -40,8 +37,6 @@ Default to 50.}
 \item{N}{Interger, determines the number of MCMC steps.}
 
 \item{output}{Integer. output every nth iteration. Defaults to 100.}
-
-\item{Npar}{Integer vector. Number of parents to each node.}
 }
 \description{
 Main network playing function

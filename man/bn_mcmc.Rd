@@ -4,14 +4,11 @@
 \alias{bn_mcmc}
 \title{Title}
 \usage{
-bn_mcmc(X, nodetype, graph, MaxPar = 50L, phi = 1, omega = 6.9,
+bn_mcmc(X, graph, MaxPar = 50L, phi = 1, omega = 6.9,
   InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L)
 }
 \arguments{
 \item{X}{numeric matrix}
-
-\item{nodetype}{Integer vector. Type of the nodes. 1 = source: 2 = sink;
-0 = neither.}
 
 \item{graph}{network object created with \code{create_network()}.}
 

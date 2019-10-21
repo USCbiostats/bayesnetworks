@@ -16,7 +16,7 @@ private:
   NumericVector sumX;
   NumericMatrix sumXX;
 
-  IntegerVector nodetype;
+  std::vector<int> node_type;
 
   std::vector<std::vector<int>> edges;
   std::vector<std::vector<int>> save_edges;
@@ -64,7 +64,6 @@ public:
 
   // Constructor
   network(NumericMatrix X,
-          IntegerVector nodetype,
           int InitialNetwork,
           int MaxPar,
           double phi,
@@ -96,7 +95,6 @@ public:
 };
 
 network::network(const NumericMatrix X,
-                 const IntegerVector nodetype,
                  const int InitialNetwork,
                  const int MaxPar,
                  const double phi,
@@ -104,7 +102,8 @@ network::network(const NumericMatrix X,
                  const std::vector<int> graph_source,
                  const std::vector<int> graph_target,
                  const std::vector<int> graph_node_type)
-  : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {
+  : X{X}, node_type{graph_node_type}, MaxPar{MaxPar},
+    phi{phi}, omega{omega} {
 
     N = X.nrow(), // Number of observations
     P = X.ncol(); // Number of variables
@@ -144,13 +143,13 @@ network::network(const NumericMatrix X,
 
       if (InitialNetwork == 1) { // create a random initial network
         for (int p = 0; p < P; p++)
-          if (nodetype[p] != 1) { // node is not a source
+          if (node_type[p] != 1) { // node is not a source
             this->Npar[p] = MaxPar * R::runif(0, 1);
             for (int s = 0; s < this->Npar[p]; s++) {
               int found = 0;
               while (!found) {
                 int source = P * R::runif(0, 1);
-                if (source != p && nodetype[source] != 2) { // proposed parent is not a sink
+                if (source != p && node_type[source] != 2) { // proposed parent is not a sink
                   this->edges[p][s] = source;
                   found = 1;
                 }
@@ -279,7 +278,7 @@ void network::propose_addition() {
   int newinput = {-1}, newoutput = {-1}, found = {0}, tries = {0};
   while (!found)  {
     newoutput = P*R::runif(0,1);  // check that the new output is not a source
-    if (nodetype[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
+    if (node_type[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
     tries ++;
     if (tries>100)
       Rprintf("Tried proposing additions more than  100  times");
@@ -287,7 +286,7 @@ void network::propose_addition() {
   found = 0; tries = 0;
   while (!found)
   {   newinput = P*R::runif(0,1);   // check that the new input is not a sink
-    if (nodetype[newinput] != 2 && newinput != newoutput) found=1;
+    if (node_type[newinput] != 2 && newinput != newoutput) found=1;
     for (int pp = 0; pp<this->Npar[newoutput]; pp ++)
       if (newinput == this->edges[newoutput][pp]) found=0;
       tries ++;

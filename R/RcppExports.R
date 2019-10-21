@@ -4,9 +4,6 @@
 #' Main network playing function
 #'
 #' @param X numeric matrix
-#' @param Npar Integer vector. Number of parents to each node.
-#' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
-#'     0 = neither.
 #' @param graph_source Integer vector. Intergers denoting the source of each
 #'     edge.
 #' @param graph_target Integer vector. Intergers denoting the target of each
@@ -25,7 +22,7 @@
 #' @param output Integer. output every nth iteration. Defaults to 100.
 #'
 #' @export
-main_fun <- function(X, nodetype, graph_source, graph_target, graph_node_labels, graph_node_type, MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L) {
-    .Call(`_bayesnetworks_main_fun`, X, nodetype, graph_source, graph_target, graph_node_labels, graph_node_type, MaxPar, phi, omega, InitialNetwork, drop, N, output)
+main_fun <- function(X, graph_source, graph_target, graph_node_labels, graph_node_type, MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L) {
+    .Call(`_bayesnetworks_main_fun`, X, graph_source, graph_target, graph_node_labels, graph_node_type, MaxPar, phi, omega, InitialNetwork, drop, N, output)
 }
 
