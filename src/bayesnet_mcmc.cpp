@@ -8,7 +8,6 @@ using namespace Rcpp;
 //' @param Npar Integer vector. Number of parents to each node.
 //' @param nodetype Integer vector. Type of the nodes. 1 = source: 2 = sink;
 //'     0 = neither.
-//' @param par Integer Matrix. Parents of node p in fitted graph.
 //' @param graph_source Integer vector. Intergers denoting the source of each
 //'     edge.
 //' @param graph_target Integer vector. Intergers denoting the target of each
@@ -29,9 +28,7 @@ using namespace Rcpp;
 //' @export
 // [[Rcpp::export]]
 DataFrame main_fun(NumericMatrix X,
-                   IntegerVector Npar,
                    IntegerVector nodetype,
-                   IntegerMatrix par,
                    std::vector<int> graph_source,
                    std::vector<int> graph_target,
                    std::vector<int> graph_node_labels,
@@ -44,8 +41,8 @@ DataFrame main_fun(NumericMatrix X,
                    int N = 1000,
                    int output = 10) {
 
-  network my_network(X, par, Npar, nodetype, InitialNetwork, MaxPar, phi, omega,
-                     graph_source, graph_target, graph_node_labels, graph_node_type);
+  network my_network(X, nodetype, InitialNetwork, MaxPar, phi, omega,
+                     graph_source, graph_target, graph_node_type);
 
   for (int i {0}; i < N;  i++) {
     my_network.save_graph();
