@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Main network playing function — main_fun • bayesnetworks</title>
+<title>Create network object — create_network • bayesnetworks</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,8 @@
 
 
 
-<meta property="og:title" content="Main network playing function — main_fun" />
-<meta property="og:description" content="Main network playing function" />
+<meta property="og:title" content="Create network object — create_network" />
+<meta property="og:description" content="This function creates a network object used in main_fun." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -100,83 +100,85 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Main network playing function</h1>
+    <h1>Create network object</h1>
     
-    <div class="hidden name"><code>main_fun.Rd</code></div>
+    <div class="hidden name"><code>create_network.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Main network playing function</p>
+    <p>This function creates a network object used in <code>main_fun</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>main_fun</span>(<span class='no'>X</span>, <span class='no'>graph_source</span>, <span class='no'>graph_target</span>, <span class='no'>graph_node_labels</span>, <span class='no'>graph_node_type</span>,
-  <span class='kw'>MaxPar</span> <span class='kw'>=</span> <span class='fl'>50L</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>omega</span> <span class='kw'>=</span> <span class='fl'>6.9</span>, <span class='kw'>InitialNetwork</span> <span class='kw'>=</span> <span class='fl'>2L</span>,
-  <span class='kw'>drop</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>1000L</span>, <span class='kw'>output</span> <span class='kw'>=</span> <span class='fl'>10L</span>)</pre>
+    <pre class="usage"><span class='fu'>create_network</span>(<span class='kw'>source</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>numeric</a></span>(), <span class='kw'>target</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>numeric</a></span>(),
+  <span class='kw'>node_labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>node_type</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>X</th>
-      <td><p>numeric matrix</p></td>
+      <th>source</th>
+      <td><p>A numeric or integer vector denoting source of the egdes in the
+network. Must be the same length and type as <code>target</code>.</p></td>
     </tr>
     <tr>
-      <th>graph_source</th>
-      <td><p>Integer vector. Intergers denoting the source of each
-edge.</p></td>
+      <th>target</th>
+      <td><p>A numeric or integer vector denoting source of the egdes in the
+network. Must be the same length and type as <code>source</code>.</p></td>
     </tr>
     <tr>
-      <th>graph_target</th>
-      <td><p>Integer vector. Intergers denoting the target of each
-edge.</p></td>
+      <th>node_labels</th>
+      <td><p>A numeric or integer vector denoting the possible nodes
+available in the network. Defaults to NULL.</p></td>
     </tr>
     <tr>
-      <th>graph_node_labels</th>
-      <td><p>Integer vector. Denoting the possible values of the
-nodes.</p></td>
-    </tr>
-    <tr>
-      <th>graph_node_type</th>
-      <td><p>Integer vector. Type of the nodes. 1 = source;
-2 = sink; 0 = neither.</p></td>
-    </tr>
-    <tr>
-      <th>MaxPar</th>
-      <td><p>Integer. Maximum number of parents allowed for a node.
-Default to 50.</p></td>
-    </tr>
-    <tr>
-      <th>phi</th>
-      <td><p>Numeric. prior on distance from prior network. Defaults to 1.</p></td>
-    </tr>
-    <tr>
-      <th>omega</th>
-      <td><p>Numeric. prior on network size. Defaults to 6.9.</p></td>
-    </tr>
-    <tr>
-      <th>InitialNetwork</th>
-      <td><p>Integer. 0 = simulated; 1 = randon; 2 = null.</p></td>
-    </tr>
-    <tr>
-      <th>drop</th>
-      <td><p>Integer. number to drop for burn-in. Defaults to 0.</p></td>
-    </tr>
-    <tr>
-      <th>N</th>
-      <td><p>Interger, determines the number of MCMC steps.</p></td>
-    </tr>
-    <tr>
-      <th>output</th>
-      <td><p>Integer. output every nth iteration. Defaults to 100.</p></td>
+      <th>node_type</th>
+      <td><p>A character vector denoting the type of node. Must be one of
+"neither", "source" or "sink". Must be the  same length as <code>node_labels</code>.
+Defaults to "neither".</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
+    <p>bayesnetworks_network object</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>The labels given by <code>source</code> and <code>target</code> must match the labels by
+<code>node_labels</code> if given. However <code>node_labels</code> can nodes with no egdes. If
+<code>node_labels</code> is left unchanged then it is assumed that all the nodes is
+represented in <code>source</code> and <code>target</code>.</p>
+<p>The possible node types specified by <code>node_type</code> have to be of the following</p><ul>
+<li><p>"source", this node doesn't have any parents.</p></li>
+<li><p>"sink", this node  doesn't have any children.</p></li>
+<li><p>"neither", this node doesn't have any restrictions placed on it.</p></li>
+</ul>
+
+<p>If <code>node_type</code> is left unchanged then  all nodes will be designated "neither"
+and will thus not have any restrictions placed on them.</p>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='fu'>create_network</span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>))</div><div class='output co'>#&gt; $source
+#&gt; [1] 1
+#&gt; 
+#&gt; $target
+#&gt; [1] 2
+#&gt; 
+#&gt; $node_labels
+#&gt; [1] 1 2
+#&gt; 
+#&gt; $node_type
+#&gt; [1] "neither" "neither"
+#&gt; 
+#&gt; attr(,"class")
+#&gt; [1] "bayesnetworks_network"</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
+      <li><a href="#details">Details</a></li>
+      <li><a href="#examples">Examples</a></li>
     </ul>
 
   </div>

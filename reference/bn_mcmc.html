@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Main network playing function — main_fun • bayesnetworks</title>
+<title>Title — bn_mcmc • bayesnetworks</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,8 @@
 
 
 
-<meta property="og:title" content="Main network playing function — main_fun" />
-<meta property="og:description" content="Main network playing function" />
+<meta property="og:title" content="Title — bn_mcmc" />
+<meta property="og:description" content="Title" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -100,18 +100,17 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Main network playing function</h1>
+    <h1>Title</h1>
     
-    <div class="hidden name"><code>main_fun.Rd</code></div>
+    <div class="hidden name"><code>bn_mcmc.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Main network playing function</p>
+    <p>Title</p>
     </div>
 
-    <pre class="usage"><span class='fu'>main_fun</span>(<span class='no'>X</span>, <span class='no'>graph_source</span>, <span class='no'>graph_target</span>, <span class='no'>graph_node_labels</span>, <span class='no'>graph_node_type</span>,
-  <span class='kw'>MaxPar</span> <span class='kw'>=</span> <span class='fl'>50L</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>omega</span> <span class='kw'>=</span> <span class='fl'>6.9</span>, <span class='kw'>InitialNetwork</span> <span class='kw'>=</span> <span class='fl'>2L</span>,
-  <span class='kw'>drop</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>1000L</span>, <span class='kw'>output</span> <span class='kw'>=</span> <span class='fl'>10L</span>)</pre>
+    <pre class="usage"><span class='fu'>bn_mcmc</span>(<span class='no'>X</span>, <span class='no'>graph</span>, <span class='kw'>MaxPar</span> <span class='kw'>=</span> <span class='fl'>50L</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>omega</span> <span class='kw'>=</span> <span class='fl'>6.9</span>,
+  <span class='kw'>InitialNetwork</span> <span class='kw'>=</span> <span class='fl'>2L</span>, <span class='kw'>drop</span> <span class='kw'>=</span> <span class='fl'>0L</span>, <span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>1000L</span>, <span class='kw'>output</span> <span class='kw'>=</span> <span class='fl'>100L</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -121,24 +120,8 @@
       <td><p>numeric matrix</p></td>
     </tr>
     <tr>
-      <th>graph_source</th>
-      <td><p>Integer vector. Intergers denoting the source of each
-edge.</p></td>
-    </tr>
-    <tr>
-      <th>graph_target</th>
-      <td><p>Integer vector. Intergers denoting the target of each
-edge.</p></td>
-    </tr>
-    <tr>
-      <th>graph_node_labels</th>
-      <td><p>Integer vector. Denoting the possible values of the
-nodes.</p></td>
-    </tr>
-    <tr>
-      <th>graph_node_type</th>
-      <td><p>Integer vector. Type of the nodes. 1 = source;
-2 = sink; 0 = neither.</p></td>
+      <th>graph</th>
+      <td><p>network object created with <code><a href='create_network.html'>create_network()</a></code>.</p></td>
     </tr>
     <tr>
       <th>MaxPar</th>
@@ -171,12 +154,16 @@ Default to 50.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>sss</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#value">Value</a></li>
     </ul>
 
   </div>
