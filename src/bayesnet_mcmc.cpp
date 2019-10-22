@@ -37,6 +37,8 @@ DataFrame main_fun(NumericMatrix X,
                    int N = 1000,
                    int output = 10) {
 
+  bool valid = true;
+
   network my_network(X, InitialNetwork, MaxPar, phi, omega,
                      graph_source, graph_target, graph_node_type);
 
@@ -45,21 +47,26 @@ DataFrame main_fun(NumericMatrix X,
 
     if (R::runif(0, 1) > 0.5 || my_network.TotalEdges < 3) {
       my_network.propose_addition();
+      valid = my_network.CheckValidity();
     } else {
       my_network.propose_deletion();
     }
 
-    if (my_network.checker(i, drop)) {
-      my_network.restore_graph();
-      if (i >= drop) my_network.reject_increment();
-    } else {
-      my_network.new2old();
-    }
+    if (valid) {
+      if (my_network.checker(i, drop)) {
+        my_network.restore_graph();
+        if (i >= drop) my_network.reject_increment();
+      } else {
+        my_network.new2old();
+      }
 
-    if (i % output == 0) {
-      my_network.logger(i);
+      if (i % output == 0) {
+        my_network.logger(i);
+      }
+    } else {
+      my_network.restore_graph();
+      my_network.notValid();
     }
   }
-
   return my_network.result();
 }

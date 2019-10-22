@@ -37,6 +37,7 @@ private:
   double NewLogPrior = 0;
 
   int movetype;
+  int newinput = {-1}, newoutput = {-1};
 
   int ChangedNode;
 
@@ -80,6 +81,9 @@ public:
   void propose_addition();
   void propose_deletion();
   double checker(int iter, int drop);
+  bool pathExists();
+  bool CheckValidity();
+  void notValid();
   void reject_increment() {
     reject[movetype] ++;
   }
@@ -89,9 +93,9 @@ public:
     OldLogPrior = NewLogPrior;
   }
 
-
   void logger(int i);
   DataFrame result();
+
 };
 
 network::network(const NumericMatrix X,
@@ -105,65 +109,65 @@ network::network(const NumericMatrix X,
   : X{X}, node_type{graph_node_type}, MaxPar{MaxPar},
     phi{phi}, omega{omega} {
 
-    N = X.nrow(), // Number of observations
-    P = X.ncol(); // Number of variables
+  N = X.nrow(), // Number of observations
+  P = X.ncol(); // Number of variables
 
-      edges.resize(graph_node_type.size());
-      IntegerVector Npar(graph_node_type.size());
-      for (int i=0; i < graph_source.size(); i++) {
-        edges[graph_target[i]-1].push_back(graph_source[i]-1);
-        Npar[graph_target[i]-1]++;
+  edges.resize(graph_node_type.size());
+  IntegerVector Npar(graph_node_type.size());
+  for (int i=0; i < graph_source.size(); i++) {
+    edges[graph_target[i]-1].push_back(graph_source[i]-1);
+    Npar[graph_target[i]-1]++;
+  }
+  this->Npar = clone(Npar);
+  this->save_Npar = clone(Npar);
+
+  NumericVector sumX(P);
+  NumericMatrix sumXX(P, P);
+
+  for (int n = 0; n < N; n++){
+    for (int p1 = 0; p1 < P; p1++) {
+      sumX[p1] += X(n, p1);
+      for (int p2 = 0; p2 < P; p2++) {
+        sumXX(p1, p2) += X(n, p1) * X(n, p2);
       }
-      this->Npar = clone(Npar);
-      this->save_Npar = clone(Npar);
+    }
+  }
+  this->sumX = sumX;
+  this->sumXX = sumXX;
 
-      NumericVector sumX(P);
-      NumericMatrix sumXX(P, P);
+  IntegerMatrix simEdge(P, P);
 
-      for (int n = 0; n < N; n++){
-        for (int p1 = 0; p1 < P; p1++) {
-          sumX[p1] += X(n, p1);
-          for (int p2 = 0; p2 < P; p2++) {
-            sumXX(p1, p2) += X(n, p1) * X(n, p2);
-          }
-        }
-      }
-      this->sumX = sumX;
-      this->sumXX = sumXX;
+  for (int p=0; p<P; p++) {
+    for (int e=0; e<(this->Npar[p]); e++) {
+      simEdge(this->edges[p][e], p) = 1;
+      NsimEdges ++;
+    }
+  }
+  this->simEdge = simEdge;
 
-      IntegerMatrix simEdge(P, P);
-
-      for (int p=0; p<P; p++) {
-        for (int e=0; e<(this->Npar[p]); e++) {
-          simEdge(this->edges[p][e], p) = 1;
-          NsimEdges ++;
-        }
-      }
-      this->simEdge = simEdge;
-
-      if (InitialNetwork == 1) { // create a random initial network
-        for (int p = 0; p < P; p++)
-          if (node_type[p] != 1) { // node is not a source
-            this->Npar[p] = MaxPar * R::runif(0, 1);
-            for (int s = 0; s < this->Npar[p]; s++) {
-              int found = 0;
-              while (!found) {
-                int source = P * R::runif(0, 1);
-                if (source != p && node_type[source] != 2) { // proposed parent is not a sink
-                  this->edges[p][s] = source;
-                  found = 1;
-                }
-              }
+  if (InitialNetwork == 1) { // create a random initial network
+    for (int p = 0; p < P; p++)
+      if (node_type[p] != 1) { // node is not a source
+        this->Npar[p] = MaxPar * R::runif(0, 1);
+        for (int s = 0; s < this->Npar[p]; s++) {
+          int found = 0;
+          while (!found) {
+            int source = P * R::runif(0, 1);
+            if (source != p && node_type[source] != 2) { // proposed parent is not a sink
+              this->edges[p][s] = source;
+              found = 1;
             }
           }
-      } else {
-        if (InitialNetwork == 2) { // create an empty initial network
-          this->Npar.fill(0);
-          std::vector<std::vector<int>> empty_edges;
-          empty_edges.resize(graph_node_type.size());
-          this->edges = empty_edges;
         }
       }
+  } else {
+    if (InitialNetwork == 2) { // create an empty initial network
+      this->Npar.fill(0);
+      std::vector<std::vector<int>> empty_edges;
+      empty_edges.resize(graph_node_type.size());
+      this->edges = empty_edges;
+    }
+  }
 }
 
 void network::save_graph() {
@@ -275,7 +279,7 @@ double network::LogPrior() {
 }
 
 void network::propose_addition() {
-  int newinput = {-1}, newoutput = {-1}, found = {0}, tries = {0};
+  int found = {0}, tries = {0};
   while (!found)  {
     newoutput = P*R::runif(0,1);  // check that the new output is not a source
     if (node_type[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
@@ -284,8 +288,8 @@ void network::propose_addition() {
       Rprintf("Tried proposing additions more than  100  times");
   }
   found = 0; tries = 0;
-  while (!found)
-  {   newinput = P*R::runif(0,1);   // check that the new input is not a sink
+  while (!found) {
+    newinput = P*R::runif(0,1);   // check that the new input is not a sink
     if (node_type[newinput] != 2 && newinput != newoutput) found=1;
     for (int pp = 0; pp<this->Npar[newoutput]; pp ++)
       if (newinput == this->edges[newoutput][pp]) found=0;
@@ -304,21 +308,23 @@ void network::propose_addition() {
 void network::propose_deletion() {
   int deloutput = P * R::runif(0, 1), delinput = -1, deledge = -1;
   int CurrNoutputs = 0, CurrOutputs[P];
-  for (int p = 0; p < P; p++)
+  for (int p = 0; p < P; p++) {
     if (this->Npar[p]) {
       CurrOutputs[CurrNoutputs] = p;
       CurrNoutputs++;
     }
-    deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
-    deledge = this->Npar[deloutput] * R::runif(0, 1);
-    delinput = this->edges[deloutput][deledge];
-    ChangedNode = deloutput;
-    OldLogLike = LogLikelihood(0);
-    OldLogPrior = LogPrior();
+  }
 
-    (this->edges[deloutput]).erase(this->edges[deloutput].begin() + deledge);
-    this->Npar[deloutput] --;
-    movetype = 2;
+  deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
+  deledge = this->Npar[deloutput] * R::runif(0, 1);
+  delinput = this->edges[deloutput][deledge];
+  ChangedNode = deloutput;
+  OldLogLike = LogLikelihood(0);
+  OldLogPrior = LogPrior();
+
+  (this->edges[deloutput]).erase(this->edges[deloutput].begin() + deledge);
+  this->Npar[deloutput] --;
+  movetype = 2;
 }
 
 double network::checker(int iter, int drop) {
@@ -355,6 +361,79 @@ DataFrame network::result() {
     Named("FN")          = logging_FN,
     Named("FP")          = logging_FP
   );
+}
+
+bool network::pathExists() {
+  int d = newoutput;
+  int s = newinput;
+  // Base case
+  if (s == d)
+    return true;
+
+  // Mark all the vertices as not visited
+  bool *visited = new bool[node_type.size()];
+  for (int i = 0; i < node_type.size(); i++)
+    visited[i] = false;
+
+  // Create a queue for BFS
+  std::list<int> queue;
+
+  // Mark the current node as visited and enqueue it
+  visited[s] = true;
+  queue.push_back(s);
+
+  // it will be used to get all adjacent vertices of a vertex
+  std::vector<int>::iterator i;
+
+  while (!queue.empty()) {
+    // Dequeue a vertex from queue and print it
+    s = queue.front();
+    queue.pop_front();
+
+    // Get all adjacent vertices of the dequeued vertex s
+    // If a adjacent has not been visited, then mark it visited
+    // and enqueue it
+    for (i = edges[s].begin(); i != edges[s].end(); ++i) {
+      // If this adjacent node is the destination node, then
+      // return true
+      if (*i == d) {
+        return true;
+      }
+
+      // Else, continue to do BFS
+      if (!visited[*i])  {
+        visited[*i] = true;
+        queue.push_back(*i);
+      }
+    }
+  }
+
+  // If BFS is complete without visiting d
+  return false;
+}
+
+bool network::CheckValidity() {
+  // did newly introduced edge create a cycle
+  if (pathExists()) {
+    return false;
+  }
+
+  // Check if parent of new edge is sink(2)
+  //if(node_type[newinput] == 2) {
+  //  return false;
+  //}
+
+  // if  offsprint of new edge is source(1)
+  //if(node_type[newoutput] == 1) {
+  //  return false;
+  //}
+
+  return true;
+}
+
+void network::notValid() {
+  movetype = 0;
+  reject[movetype] ++;
 }
 
 #endif
