@@ -46,28 +46,30 @@ The network is fitted by passing in data and network structure
 library(bayesnetworks)
 set.seed(1234)
 
-x <- fit_network(X = network$data,
-                 Npar = network$dag_info$Npar,
-                 nodetype = network$dag_info$nodetype,
-                 par = network$dag_info$par,
-                 Niter = 50000)
+x <- bn_mcmc(X = network$data, graph = network$dag_info, N = 50000)
 ```
 
 Some diagnostic plots:
 
 ```{r}
 library(ggplot2)
-ggplot(x$mcmc, aes(iter, Nagree)) +
-  geom_line(aes(color = "Nagree")) +
-  geom_line(aes(y = TotalEdges, color = "TotalEdges")) +
-  scale_color_manual(values = c("#B22222", "#22B2B2"))
+
+ggplot(x, aes(iter, globalLL)) +
+  geom_line()
 ```
 
 ```{r}
-ggplot(x$mcmc, aes(iter, FN)) +
+ggplot(x, aes(iter, FN)) +
   geom_line(aes(color = "FN")) +
   geom_line(aes(y = FP, color = "FP")) +
-  scale_color_manual(values = c("#FFA500", "#005AFF"))
+  labs(y = "value")
+```
+
+```{r}
+ggplot(x, aes(iter, deletions)) +
+  geom_line(aes(color = "deletions")) +
+  geom_line(aes(y = additions, color = "additions")) +
+  labs(y = "count")
 ```
 
 ## Code of Conduct

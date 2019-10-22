@@ -16,9 +16,11 @@ private:
   NumericVector sumX;
   NumericMatrix sumXX;
 
-  IntegerVector nodetype;
+  std::vector<int> node_type;
 
-  IntegerMatrix par;
+  std::vector<std::vector<int>> edges;
+  std::vector<std::vector<int>> save_edges;
+
   IntegerVector Npar;
 
   IntegerMatrix save_par;
@@ -35,6 +37,7 @@ private:
   double NewLogPrior = 0;
 
   int movetype;
+  int newinput = {-1}, newoutput = {-1};
 
   int ChangedNode;
 
@@ -62,13 +65,13 @@ public:
 
   // Constructor
   network(NumericMatrix X,
-          IntegerMatrix par,
-          IntegerVector Npar,
-          IntegerVector nodetype,
           int InitialNetwork,
           int MaxPar,
           double phi,
-          double omega);
+          double omega,
+          std::vector<int> graph_source,
+          std::vector<int> graph_target,
+          std::vector<int> graph_node_type);
 
   void save_graph();
   void restore_graph();
@@ -78,6 +81,9 @@ public:
   void propose_addition();
   void propose_deletion();
   double checker(int iter, int drop);
+  bool pathExists();
+  bool CheckValidity();
+  void notValid();
   void reject_increment() {
     reject[movetype] ++;
   }
@@ -87,84 +93,91 @@ public:
     OldLogPrior = NewLogPrior;
   }
 
-
   void logger(int i);
   DataFrame result();
+
 };
 
 network::network(const NumericMatrix X,
-                 const IntegerMatrix par,
-                 const IntegerVector Npar,
-                 const IntegerVector nodetype,
                  const int InitialNetwork,
                  const int MaxPar,
                  const double phi,
-                 const double omega)
-  : X{X}, nodetype{nodetype}, MaxPar{MaxPar}, phi{phi}, omega{omega} {
+                 const double omega,
+                 const std::vector<int> graph_source,
+                 const std::vector<int> graph_target,
+                 const std::vector<int> graph_node_type)
+  : X{X}, node_type{graph_node_type}, MaxPar{MaxPar},
+    phi{phi}, omega{omega} {
 
-      this->Npar = clone(Npar);
-      this->save_Npar = clone(Npar);
+  N = X.nrow(), // Number of observations
+  P = X.ncol(); // Number of variables
 
-      this->par = clone(par);
-      this->save_par = clone(par);
+  edges.resize(graph_node_type.size());
+  IntegerVector Npar(graph_node_type.size());
+  for (int i=0; i < graph_source.size(); i++) {
+    edges[graph_target[i]-1].push_back(graph_source[i]-1);
+    Npar[graph_target[i]-1]++;
+  }
+  this->Npar = clone(Npar);
+  this->save_Npar = clone(Npar);
 
-      N = X.nrow(), // Number of observations
-      P = X.ncol(); // Number of variables
+  NumericVector sumX(P);
+  NumericMatrix sumXX(P, P);
 
-      NumericVector sumX(P);
-      NumericMatrix sumXX(P, P);
-
-      for (int n = 0; n < N; n++){
-        for (int p1 = 0; p1 < P; p1++) {
-          sumX[p1] += X(n, p1);
-          for (int p2 = 0; p2 < P; p2++) {
-            sumXX(p1, p2) += X(n, p1) * X(n, p2);
-          }
-        }
+  for (int n = 0; n < N; n++){
+    for (int p1 = 0; p1 < P; p1++) {
+      sumX[p1] += X(n, p1);
+      for (int p2 = 0; p2 < P; p2++) {
+        sumXX(p1, p2) += X(n, p1) * X(n, p2);
       }
-      this->sumX = sumX;
-      this->sumXX = sumXX;
+    }
+  }
+  this->sumX = sumX;
+  this->sumXX = sumXX;
 
-      IntegerMatrix simEdge(P, P);
+  IntegerMatrix simEdge(P, P);
 
-      for (int p=0; p<P; p++) {
-        for (int e=0; e<this->Npar[p]; e++) {
-          simEdge(this->par(p, e), p) = 1;
-          NsimEdges ++;
-        }
-      }
-      this->simEdge = simEdge;
+  for (int p=0; p<P; p++) {
+    for (int e=0; e<(this->Npar[p]); e++) {
+      simEdge(this->edges[p][e], p) = 1;
+      NsimEdges ++;
+    }
+  }
+  this->simEdge = simEdge;
 
-      if (InitialNetwork == 1) { // create a random initial network
-        for (int p = 0; p < P; p++)
-          if (nodetype[p] != 1) { // node is not a source
-            this->Npar[p] = MaxPar * R::runif(0, 1);
-            for (int s = 0; s < this->Npar[p]; s++) {
-              int found = 0;
-              while (!found) {
-                int source = P * R::runif(0, 1);
-                if (source != p && nodetype[source] != 2) { // proposed parent is not a sink
-                  this->par(p, s) = source;
-                  found = 1;
-                }
-              }
+  if (InitialNetwork == 1) { // create a random initial network
+    for (int p = 0; p < P; p++)
+      if (node_type[p] != 1) { // node is not a source
+        this->Npar[p] = MaxPar * R::runif(0, 1);
+        for (int s = 0; s < this->Npar[p]; s++) {
+          int found = 0;
+          while (!found) {
+            int source = P * R::runif(0, 1);
+            if (source != p && node_type[source] != 2) { // proposed parent is not a sink
+              this->edges[p][s] = source;
+              found = 1;
             }
           }
-      } else {
-        if (InitialNetwork == 2) { // create an empty initial network
-          this->Npar.fill(0);
         }
       }
+  } else {
+    if (InitialNetwork == 2) { // create an empty initial network
+      this->Npar.fill(0);
+      std::vector<std::vector<int>> empty_edges;
+      empty_edges.resize(graph_node_type.size());
+      this->edges = empty_edges;
+    }
+  }
 }
 
 void network::save_graph() {
+  save_edges = this->edges;
   save_Npar = clone(this->Npar);
-  save_par = clone(this->par);
 }
 
 void network::restore_graph() {
+  this->edges = save_edges;
   this->Npar = clone(save_Npar);
-  this->par = clone(save_par);
 }
 
 double network::score(int p) {
@@ -184,11 +197,11 @@ double network::score(int p) {
   SXY[0] = sumX[p];
 
   for (int par1  = 0; par1 < this->Npar[p]; par1++) {
-    int p1 = this->par(p, par1);
+    int p1 = this->edges[p][par1];
     SXY[par1+1] = sumXX(p, p1);
     SXX[par1+1][0] = sumX[p1]; SXX[0][par1+1] = SXX[par1+1][0];
     for (int par2 = 0; par2 < this->Npar[p]; par2++) {
-      int p2 = this->par(p, par2);
+      int p2 = this->edges[p][par2];
       SXX[par1+1][par2+1] = sumXX(p1, p2);
     }
   }
@@ -212,7 +225,7 @@ double network::score(int p) {
   for (int n = 0; n < N; n++) {
     double EX = beta[0];
     for (int Par = 0; Par < this->Npar[p]; Par++) {
-      EX += beta[Par+1] * X(n, this->par(p, Par));
+      EX += beta[Par+1] * X(n, this->edges[p][Par]);
     }
     resid2 += pow(X(n, p) - EX, 2);
   }
@@ -252,7 +265,7 @@ double network::LogPrior() {
   for (int p = 0; p < P; p++) {
     for (int e = 0; e < this->Npar[p]; e++) {
       TotalEdges ++;
-      if (simEdge(this->par(p, e), p))  {
+      if (simEdge(this->edges[p][e], p))  {
         Nagree ++;
       }
     }
@@ -266,20 +279,20 @@ double network::LogPrior() {
 }
 
 void network::propose_addition() {
-  int newinput = {-1}, newoutput = {-1}, found = {0}, tries = {0};
+  int found = {0}, tries = {0};
   while (!found)  {
     newoutput = P*R::runif(0,1);  // check that the new output is not a source
-    if (nodetype[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
+    if (node_type[newoutput] != 1 && this->Npar[newoutput]<MaxPar) found=1;
     tries ++;
     if (tries>100)
       Rprintf("Tried proposing additions more than  100  times");
   }
   found = 0; tries = 0;
-  while (!found)
-  {   newinput = P*R::runif(0,1);   // check that the new input is not a sink
-    if (nodetype[newinput] != 2 && newinput != newoutput) found=1;
+  while (!found) {
+    newinput = P*R::runif(0,1);   // check that the new input is not a sink
+    if (node_type[newinput] != 2 && newinput != newoutput) found=1;
     for (int pp = 0; pp<this->Npar[newoutput]; pp ++)
-      if (newinput == this->par(newoutput, pp)) found=0;
+      if (newinput == this->edges[newoutput][pp]) found=0;
       tries ++;
       if (tries>100)
         Rprintf("Tried proposing deletions more than  100  times");
@@ -287,7 +300,7 @@ void network::propose_addition() {
   ChangedNode = newoutput;
   OldLogLike = LogLikelihood(0);
   OldLogPrior = LogPrior();
-  this->par(newoutput, this->Npar[newoutput]) = newinput;
+  (this->edges[newoutput]).push_back(newinput);
   this->Npar[newoutput] ++;
   movetype = 1;
 }
@@ -295,23 +308,23 @@ void network::propose_addition() {
 void network::propose_deletion() {
   int deloutput = P * R::runif(0, 1), delinput = -1, deledge = -1;
   int CurrNoutputs = 0, CurrOutputs[P];
-  for (int p = 0; p < P; p++)
+  for (int p = 0; p < P; p++) {
     if (this->Npar[p]) {
       CurrOutputs[CurrNoutputs] = p;
       CurrNoutputs++;
     }
-    deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
-    deledge = this->Npar[deloutput] * R::runif(0, 1);
-    delinput = this->par(deloutput, deledge);
-    ChangedNode = deloutput;
-    OldLogLike = LogLikelihood(0);
-    OldLogPrior = LogPrior();
+  }
 
-    for (int e = deledge; e < this->Npar[deloutput]; e++) {
-      this->par(deloutput, e) = this->par(deloutput, e+1);
-    }
-    this->Npar[deloutput] --;
-    movetype = 2;
+  deloutput = CurrOutputs[int(CurrNoutputs * R::runif(0, 1))];
+  deledge = this->Npar[deloutput] * R::runif(0, 1);
+  delinput = this->edges[deloutput][deledge];
+  ChangedNode = deloutput;
+  OldLogLike = LogLikelihood(0);
+  OldLogPrior = LogPrior();
+
+  (this->edges[deloutput]).erase(this->edges[deloutput].begin() + deledge);
+  this->Npar[deloutput] --;
+  movetype = 2;
 }
 
 double network::checker(int iter, int drop) {
@@ -348,6 +361,79 @@ DataFrame network::result() {
     Named("FN")          = logging_FN,
     Named("FP")          = logging_FP
   );
+}
+
+bool network::pathExists() {
+  int d = newoutput;
+  int s = newinput;
+  // Base case
+  if (s == d)
+    return true;
+
+  // Mark all the vertices as not visited
+  bool *visited = new bool[node_type.size()];
+  for (int i = 0; i < node_type.size(); i++)
+    visited[i] = false;
+
+  // Create a queue for BFS
+  std::list<int> queue;
+
+  // Mark the current node as visited and enqueue it
+  visited[s] = true;
+  queue.push_back(s);
+
+  // it will be used to get all adjacent vertices of a vertex
+  std::vector<int>::iterator i;
+
+  while (!queue.empty()) {
+    // Dequeue a vertex from queue and print it
+    s = queue.front();
+    queue.pop_front();
+
+    // Get all adjacent vertices of the dequeued vertex s
+    // If a adjacent has not been visited, then mark it visited
+    // and enqueue it
+    for (i = edges[s].begin(); i != edges[s].end(); ++i) {
+      // If this adjacent node is the destination node, then
+      // return true
+      if (*i == d) {
+        return true;
+      }
+
+      // Else, continue to do BFS
+      if (!visited[*i])  {
+        visited[*i] = true;
+        queue.push_back(*i);
+      }
+    }
+  }
+
+  // If BFS is complete without visiting d
+  return false;
+}
+
+bool network::CheckValidity() {
+  // did newly introduced edge create a cycle
+  if (pathExists()) {
+    return false;
+  }
+
+  // Check if parent of new edge is sink(2)
+  //if(node_type[newinput] == 2) {
+  //  return false;
+  //}
+
+  // if  offsprint of new edge is source(1)
+  //if(node_type[newoutput] == 1) {
+  //  return false;
+  //}
+
+  return true;
+}
+
+void network::notValid() {
+  movetype = 0;
+  reject[movetype] ++;
 }
 
 #endif

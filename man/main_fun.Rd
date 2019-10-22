@@ -4,18 +4,24 @@
 \alias{main_fun}
 \title{Main network playing function}
 \usage{
-main_fun(X, Npar, nodetype, par, MaxPar = 50L, phi = 1, omega = 6.9,
-  InitialNetwork = 2L, drop = 0L, N = 1000L, output = 10L)
+main_fun(X, graph_source, graph_target, graph_node_labels, graph_node_type,
+  MaxPar = 50L, phi = 1, omega = 6.9, InitialNetwork = 2L,
+  drop = 0L, N = 1000L, output = 10L)
 }
 \arguments{
 \item{X}{numeric matrix}
 
-\item{Npar}{Integer vector. Number of parents to each node.}
+\item{graph_source}{Integer vector. Intergers denoting the source of each
+edge.}
 
-\item{nodetype}{Integer vector. Type of the nodes. 1 = source: 2 = sink;
-0 = neither.}
+\item{graph_target}{Integer vector. Intergers denoting the target of each
+edge.}
 
-\item{par}{Integer Matrix. Parents of node p in fitted graph.}
+\item{graph_node_labels}{Integer vector. Denoting the possible values of the
+nodes.}
+
+\item{graph_node_type}{Integer vector. Type of the nodes. 1 = source;
+2 = sink; 0 = neither.}
 
 \item{MaxPar}{Integer. Maximum number of parents allowed for a node.
 Default to 50.}

@@ -12,3 +12,4 @@
 ^pkgdown$
 ^Bayes-networks$
 ^data-raw$
+^debug.R$
